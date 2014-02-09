@@ -46,6 +46,7 @@
   display: none;
   fill: none;
   stroke: #000;
+  z-index: 100000000000000000;
 }
 
 .state:hover .edge {
@@ -127,6 +128,7 @@ function ready(error, world, us, links, location, stcodes, cocodes) {
     var source = bplByCode.get(link.Birthplace),
         target = bplByCode.get(link.State),
         link = {source: source, target: target, weight: link.Weight};
+    
     source.outgoing.push(link);
     target.incoming.push(link);
   });
@@ -179,6 +181,7 @@ function ready(error, world, us, links, location, stcodes, cocodes) {
      .selectAll("path")
        .data(function(d) { return d.incoming; })
      .enter().append("path")
+       .attr("opacity", function(d)
        .attr("d", function(d) { 
          return path({type: "LineString", coordinates: [d.source, d.target]});
        });
