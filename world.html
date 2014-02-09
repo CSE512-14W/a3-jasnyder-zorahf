@@ -4,8 +4,6 @@
 
 .overlay {
   fill: none;
-  pointer-events: fill;
-  z-index: -1;
 }
 
 .land {
@@ -42,6 +40,7 @@
 </style>
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script src="http://d3js.org/topojson.v1.min.js"></script>
+<script src="http://d3js.org/queue.v1.min.js"></script>
 <body>
 <script>
 
@@ -83,13 +82,56 @@ svg.append("rect")
     .attr("width", width)
     .attr("height", height);
 
-d3.json("json/world-50m.json", function(error, world) {
+queue()
+  .defer(d3.json, "json/world-50m.json")
+  .defer(d3.json, "json/us-counties-states.json")
+  .defer(d3.csv, "data/links.csv")
+  .defer(d3.csv, "data/bpl_latlon2.csv")
+  .defer(d3.csv, "data/state_bpl.csv")
+  .defer(d3.csv, "data/country_bpl.csv")
+  .await(ready);
+
+function ready(error, world, us, links, location, stcodes, cocodes) {
+  var bplByCode = d3.map(),
+      bplFromState = d3.map(),
+      bplFromCountry = d3.map(),
+    positions = [];
+
+  stcodes.forEach(function(d) {
+    bplFromState.set(d.jsonstate, d.bpl);    
+  });  
+
+  cocodes.forEach(function(d) {
+    bplFromCountry.set(d.iso, d.bpl);
+  });  
+
+  location.forEach(function(d) {
+    bplByCode.set(d.bpl, d);
+    d[0] = +d.longitude;
+    d[1] = +d.latitude;
+    var position = projection(d); 
+    d.x = position[0];
+    d.y = position[1];
+    d.outgoing = [];
+    d.incoming = [];
+  });
+
+  links.forEach(function(link) {
+    console.log(link.Birthplace);
+    var source = bplByCode.get(link.Birthplace),
+        target = bplByCode.get(link.State),
+        link = {source: source, target: target};
+    source.outgoing.push(link);
+    target.incoming.push(link);
+  });
+
   var topo = world.objects.countries;
 
   countries.selectAll("path")
       .data(topojson.feature(world, topo).features)
     .enter().append("path")
       .attr("class", "land")
+      .attr("title", function(d) { return bplFromState.get(d.id); } )
       .attr("d", path);
 
 
@@ -97,22 +139,23 @@ d3.json("json/world-50m.json", function(error, world) {
       .datum(topojson.mesh(world, world.objects.countries, function(a, b) { return a !== b; }))
       .attr("class", "boundary")
       .attr("d", path);
-});
 
-d3.json("json/us-states.json", function(error, us) {
-  var topo = us.objects.layer1
+  var topo = us.objects.layer1;
 
   states.selectAll("path")
       .data(topojson.feature(us, topo).features)
    .enter().append("path")
       .attr("class", "us")
+      .attr("title", function(d) { return bplFromCountry.get(d.id); } )
       .attr("d", path);
 
   states.append("path")
       .datum(topojson.mesh(us, us.objects.layer1, function(a, b) { return a !== b; }))
       .attr("class", "stateb")
       .attr("d", path);
-});
+
+  
+}
 
 function move() {
   var t = d3.event.translate,
