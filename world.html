@@ -4,11 +4,26 @@
 
 .overlay {
   fill: none;
-  pointer-events: all;
+  pointer-events: fill;
+  z-index: -1;
 }
 
 .land {
   fill: #000;
+}
+
+.us {
+  fill: #cccccc;
+}
+
+.us:hover {
+  fill: orange;
+  pointer-events: inherit;
+}
+
+.land:hover {
+  fill: red;
+  pointer-events: inherit;
 }
 
 .boundary {
@@ -18,6 +33,12 @@
   stroke-linecap: round;
 }
 
+.stateb {
+  fill: none;
+  stroke: #000;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
 </style>
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script src="http://d3js.org/topojson.v1.min.js"></script>
@@ -47,6 +68,14 @@ var svg = d3.select("body").append("svg")
 
 var g = svg.append("g");
 
+var countries = g.append("g")
+  .attr("id", "countries")
+  .attr("class", "Blues");
+
+var states = g.append("g")
+  .attr("id", "states")
+  .attr("class", "Blues");
+
 svg.append("rect")
     .attr("class", "overlay")
     .attr("x", -width / 2)
@@ -55,14 +84,33 @@ svg.append("rect")
     .attr("height", height);
 
 d3.json("json/world-50m.json", function(error, world) {
-  g.append("path")
-      .datum(topojson.feature(world, world.objects.countries))
+  var topo = world.objects.countries;
+
+  countries.selectAll("path")
+      .data(topojson.feature(world, topo).features)
+    .enter().append("path")
       .attr("class", "land")
       .attr("d", path);
 
-  g.append("path")
+
+  countries.append("path")
       .datum(topojson.mesh(world, world.objects.countries, function(a, b) { return a !== b; }))
       .attr("class", "boundary")
+      .attr("d", path);
+});
+
+d3.json("json/us-states.json", function(error, us) {
+  var topo = us.objects.layer1
+
+  states.selectAll("path")
+      .data(topojson.feature(us, topo).features)
+   .enter().append("path")
+      .attr("class", "us")
+      .attr("d", path);
+
+  states.append("path")
+      .datum(topojson.mesh(us, us.objects.layer1, function(a, b) { return a !== b; }))
+      .attr("class", "stateb")
       .attr("d", path);
 });
 
