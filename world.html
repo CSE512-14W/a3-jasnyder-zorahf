@@ -6,20 +6,20 @@
   fill: none;
 }
 
-.land {
+.country {
   fill: #000;
 }
 
-.us {
+.state {
   fill: #cccccc;
 }
 
-.us:hover {
+.state:hover {
   fill: orange;
   pointer-events: inherit;
 }
 
-.land:hover {
+.country:hover {
   fill: red;
   pointer-events: inherit;
 }
@@ -37,6 +37,21 @@
   stroke-linejoin: round;
   stroke-linecap: round;
 }
+
+#country-840 {
+  fill: none;
+}
+
+.edge {
+  display: none;
+  fill: none;
+  stroke: #000;
+}
+
+.state:hover .edge {
+  display: inline;
+}
+
 </style>
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script src="http://d3js.org/topojson.v1.min.js"></script>
@@ -66,15 +81,7 @@ var svg = d3.select("body").append("svg")
     .call(zoom);
 
 var g = svg.append("g");
-
-var countries = g.append("g")
-  .attr("id", "countries")
-  .attr("class", "Blues");
-
-var states = g.append("g")
-  .attr("id", "states")
-  .attr("class", "Blues");
-
+                               
 svg.append("rect")
     .attr("class", "overlay")
     .attr("x", -width / 2)
@@ -93,12 +100,12 @@ queue()
 
 function ready(error, world, us, links, location, stcodes, cocodes) {
   var bplByCode = d3.map(),
-      bplFromState = d3.map(),
+      bplToState = d3.map(),
       bplFromCountry = d3.map(),
     positions = [];
 
   stcodes.forEach(function(d) {
-    bplFromState.set(d.jsonstate, d.bpl);    
+    bplToState.set(d.bpl, d.jsonstate);    
   });  
 
   cocodes.forEach(function(d) {
@@ -117,44 +124,69 @@ function ready(error, world, us, links, location, stcodes, cocodes) {
   });
 
   links.forEach(function(link) {
-    console.log(link.Birthplace);
     var source = bplByCode.get(link.Birthplace),
         target = bplByCode.get(link.State),
-        link = {source: source, target: target};
+        link = {source: source, target: target, weight: link.Weight};
     source.outgoing.push(link);
     target.incoming.push(link);
   });
 
+  var bpl_states = location.filter(function(d) {
+    if (d.bpl <= 115) { return true; }
+  });
+
+  var bpl_countries = location.filter(function(d) {
+    if (d.bpl > 115 && d.bpl < 950) { return true; }
+  });
+
+  var countries = g.append("g")
+    .attr("class", "countries");
+
+                               
+                               
   var topo = world.objects.countries;
 
   countries.selectAll("path")
       .data(topojson.feature(world, topo).features)
     .enter().append("path")
-      .attr("class", "land")
-      .attr("title", function(d) { return bplFromState.get(d.id); } )
+      .attr("class", "country")
+      .attr("title", function(d) { return bplFromCountry.get(d.id); } )
+      .attr("id", function(d) { return "country-" + d.id; })
       .attr("d", path);
-
 
   countries.append("path")
       .datum(topojson.mesh(world, world.objects.countries, function(a, b) { return a !== b; }))
       .attr("class", "boundary")
       .attr("d", path);
 
-  var topo = us.objects.layer1;
-
-  states.selectAll("path")
-      .data(topojson.feature(us, topo).features)
-   .enter().append("path")
-      .attr("class", "us")
-      .attr("title", function(d) { return bplFromCountry.get(d.id); } )
-      .attr("d", path);
+  var states = g.append("g")
+    .attr("class", "states")
+    .selectAll("g")
+      .data(bpl_states)
+    .enter().append("g")
+      .attr("class", "state");
 
   states.append("path")
+      .datum(function(d) { 
+         var jsonid = bplToState.get(d.bpl);
+         return topojson.feature(us, us.objects.layer1).features[jsonid];
+      })
+      .attr("class", "polygon")
+      .attr("d", path);
+  
+  states.append("g")
+       .attr("class", "edge")
+     .selectAll("path")
+       .data(function(d) { return d.incoming; })
+     .enter().append("path")
+       .attr("d", function(d) { 
+         return path({type: "LineString", coordinates: [d.source, d.target]});
+       });
+
+  g.append("path")
       .datum(topojson.mesh(us, us.objects.layer1, function(a, b) { return a !== b; }))
       .attr("class", "stateb")
       .attr("d", path);
-
-  
 }
 
 function move() {
