@@ -6,19 +6,19 @@ states = {}
 
 for line in reader:
     fip = int(line['STATEFIP'])
-    bpl = int(line['BPL'])
+    bpld = int(line['BPLD'])
     wt = int(line['PERWT']) / 100.0
     if fip in states:
-        if bpl in states[fip]:
-            states[fip][bpl] += wt
+        if bpld in states[fip]:
+            states[fip][bpld] += wt
         else:
-            states[fip][bpl] = wt
+            states[fip][bpld] = wt
     else:
         states[fip] = {}
-        states[fip][bpl] = wt
+        states[fip][bpld] = wt
         
 print "State,Birthplace,Weight"
         
 for fip, fipdict in states.iteritems():
-    for bpl, wt in fipdict.iteritems():
-        print str(fip) + "," + str(bpl) + "," + str(wt)
+    for bpld, wt in fipdict.iteritems():
+        print str(100*fip) + "," + str(bpld) + "," + str(wt)

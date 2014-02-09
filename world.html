@@ -96,21 +96,21 @@ queue()
   .defer(d3.csv, "data/links.csv")
   .defer(d3.csv, "data/bpl_latlon2.csv")
   .defer(d3.csv, "data/state_bpl.csv")
-  .defer(d3.csv, "data/country_bpl.csv")
+  .defer(d3.csv, "data/country_bpld.csv")
   .await(ready);
 
 function ready(error, world, us, links, location, stcodes, cocodes) {
-  var bplByCode = d3.map(),
-      bplToState = d3.map(),
-      bplFromCountry = d3.map(),
+  var bpldByCode = d3.map(),
+      bpldToState = d3.map(),
+      bpldToCountry = d3.map(),
     positions = [];
 
   stcodes.forEach(function(d) {
-    bplToState.set(d.bpl, d.jsonstate);    
+    bpldToState.set(d.bpl, d.jsonstate);    
   });  
 
   cocodes.forEach(function(d) {
-    bplFromCountry.set(d.iso, d.bpl);
+    bplFromCountry.set(d.bpld, d.iso);
   });  
 
   location.forEach(function(d) {
@@ -190,6 +190,8 @@ function ready(error, world, us, links, location, stcodes, cocodes) {
       .datum(topojson.mesh(us, us.objects.layer1, function(a, b) { return a !== b; }))
       .attr("class", "stateb")
       .attr("d", path);
+   
+
 }
 
 function move() {
