@@ -3,7 +3,7 @@
 }
 
 .country {
-  fill: #000;
+  fill: #9C9C9C;
 }
 
 .state {
@@ -16,8 +16,12 @@
 }
 
 .country:hover {
-  fill: red;
+  fill: #CFDB7F;
   pointer-events: inherit;
+}
+
+.static {
+  fill: #9C9C9C;
 }
 
 .boundary {
@@ -29,7 +33,7 @@
 
 .stateb {
   fill: none;
-  stroke: #000;
+  stroke: #fff;
   stroke-linejoin: round;
   stroke-linecap: round;
 }
