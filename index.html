@@ -192,10 +192,13 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
             { return 'n'; }
         else { return 's'; }
       },
+      html: true
     });
 
   country.on("click", function() {
-    d3.selectAll(".state").style("fill", null);
+    d3.selectAll(".state")
+      .style("fill", null)
+      .attr("original-title", function(d) { return d.name; });;
     d3.select(this).style("fill", "#CFDB7F");
     if (selection && selection !== this) { d3.select(selection).style("fill", null);}
     selection = this;
@@ -206,7 +209,12 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
     q = d3.scale.quantile().domain(domain.values()).range(colorbrewer.PuBu[7])
     
     emigrants.keys().forEach(function(bpl) {
-      d3.select("#bpld-" + bpl).style("fill", q(domain.get(bpl)));
+      dest = bpldByCode.get(bpl);
+      d3.select("#bpld-" + bpl)
+        .style("fill", q(domain.get(bpl)))
+        .attr("original-title", dest.name + "<br>" + (domain.get(bpl) * 100).toFixed(3) +
+        "% " + d.name +  " natives<br>" + emigrants.get(bpl) +
+        "/" + dest.pop + " residents" );;
     });
 
   });
@@ -242,22 +250,36 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
       .attr("d", path);
   
     $(".state").tipsy({
-      gravity: 's',
+      gravity: function() {
+        var name = this.__data__.name;
+        if (name == "Alaska")
+            { return 'n'; }
+        else { return 's'; }
+      },
+      html: true
     });
 
 
   state.on("click", function() {
-    d3.selectAll(".state").style("fill", null);
+    d3.selectAll(".state")
+      .style("fill", null)
+      .attr("original-title", function(d) { return d.name; }); 
     if (selection && selection !== this) { d3.select(selection).style("fill", null);}
     selection = this;
-    d = this.__data__.emigrants;
+    d = this.__data__;
+    emigrants = d.emigrants;
 
     domain = d3.map();
-    d.entries().forEach(function(d) { domain.set(d.key, d.value / bpldByCode.get(d.key).pop); });
+    emigrants.entries().forEach(function(d) { domain.set(d.key, d.value / bpldByCode.get(d.key).pop); });
     q = d3.scale.quantile().domain(domain.values()).range(colorbrewer.PuBu[7])
     
-    d.keys().forEach(function(bpl) {
-      d3.select("#bpld-" + bpl).style("fill", q(domain.get(bpl)));
+    emigrants.keys().forEach(function(bpl) {
+      dest = bpldByCode.get(bpl);
+      d3.select("#bpld-" + bpl)
+        .style("fill", q(domain.get(bpl)))
+        .attr("original-title", dest.name + "<br>" + (domain.get(bpl) * 100).toFixed(3) +
+        "% " + d.name +  " natives<br>" + emigrants.get(bpl) +
+        "/" + dest.pop + " residents" );
     });
   });  
 
