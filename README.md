@@ -13,6 +13,10 @@ United States Migration Explorer
 The United States Migration Explorer uses 2012 census data to allow you to explore migration patterns to and from states
 in America.
 
+By clicking on a state or country, a user can see which states that people born in selected state or country moved to. The U.S. map is colored in seven quantiles, based on the ratio of the emigrants from the selected region to the population of the colored state. Darker colors signify a higher ratio. Once a region has been selected, users may hover over individual states to view the numerical representation of the ratio, as well the number of immigrants from the selected region.
+
+A "mode" button toggles between "source" and "destination" modes. "Source" mode exhibits the behavior described above. "Destination" mode changes the selected region to show where the people currently living in the selected region go.
+
 ## Running Instructions
 
 Access our visualization at http://cse512-14w.github.io/a3-jasnyder-zorahf/ or download this repository and run `python -m SimpleHTTPServer 9000` and access this from http://localhost:9000/.
@@ -25,15 +29,13 @@ Access our visualization at http://cse512-14w.github.io/a3-jasnyder-zorahf/ or d
 
 ### Changes between Storyboard and the Final Implementation
 
-A paragraph explaining changes between the storyboard and the final implementation.
+As it turns out, our original idea was a bit more work than we anticipated (surprise!), epsecially given that we were not very familiar with d3 and javascript.
 
 ## Development Process
 
 Everything took longer than we originally aniticipated. We spent several picking our data set, brainstorming
-different questions based on a variety of attributes of the data, and iterating through visualization ideas.
-
-Include:
-- Breakdown of how the work was split among the group members. 
-- a commentary on the development process, including answers to the following questions: 
-  - Roughly how much time did you spend developing your application?
-  - What aspects took the most time?
+different questions based on a variety of attributes of the data, and iterating through visualization ideas until 
+we settled on a final storyboard. We then spent few hours more hours sifting through geographic examples to both
+give ourselves some base code, as well as give us an idea of what sorts of map visualizations could be created
+with d3. While developing the visualization itself, we coded and updated our data somewhat in parallel. Most of our
+time (several, several hours) was sunk into reformatting or modifying imperfect data, much of which had to be done manually. We worked through all of our problems together as a pair (rather than separately in parallel) from start to finish.
