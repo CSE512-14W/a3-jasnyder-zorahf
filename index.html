@@ -4,11 +4,11 @@
 <script src="http://d3js.org/topojson.v1.min.js"></script>
 <script src="http://d3js.org/queue.v1.min.js"></script>
 <script src="http://d3js.org/colorbrewer.v1.min.js"></script>
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.6.2.min.js"></script> 
+<script type="text/javascript" src="tipsy/jquery.tipsy.js"></script>
 <link href="css/usmig.css" rel="stylesheet" type="text/css" />
+<link href="css/tipsy.css" rel="stylesheet" type="text/css" />
 <body>
-  <div id="tooltip" class="hidden">
-        <p><span id="value"></span></p>
-  </div>
   <button id="modeButton">Source Mode</button>
 <script>
 
@@ -165,7 +165,8 @@ function ready(error, world, us, links, location, stcodes, cocodes, conames) {
       .data(bpl_countries)
     .enter().append("g")
       .attr("class", "country")
-      .attr("id", function(d) { return "bpld-" + d.bpl; });
+      .attr("id", function(d) { return "bpld-" + d.bpl; })
+      .attr("title", function(d) { return d.name; });
   
   country.append("path")
       .datum(function(d) {
@@ -174,6 +175,13 @@ function ready(error, world, us, links, location, stcodes, cocodes, conames) {
     .attr("class", "polygon")
     .attr("d", path);
   
+    $(".country").tipsy({
+      title: function() {
+        var d = this.__data__;
+        return "" + d.name;
+      }
+    })
+
   country.on("mouseover", function() {
     d = this.__data__;
     emigrants = d.emigrants
@@ -263,7 +271,6 @@ function ready(error, world, us, links, location, stcodes, cocodes, conames) {
       .attr("class", "stateb")
       .attr("d", path);
 
-  d3.select("#modeButton").
 }
 
 function move() {
