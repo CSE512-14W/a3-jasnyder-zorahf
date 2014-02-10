@@ -1,0 +1,50 @@
+.overlay {
+  fill: none;
+}
+
+.country {
+  fill: #000;
+}
+
+.state {
+  fill: #cccccc;
+}
+
+.state:hover {
+  fill: orange;
+  pointer-events: inherit;
+}
+
+.country:hover {
+  fill: red;
+  pointer-events: inherit;
+}
+
+.boundary {
+  fill: none;
+  stroke: #fff;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.stateb {
+  fill: none;
+  stroke: #000;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+#country-840 {
+  fill: none;
+}
+
+.edge {
+  display: none;
+  fill: none;
+  stroke: #000;
+  z-index: 100000000000000000;
+}
+
+.state:hover .edge {
+  display: inline;
+}
