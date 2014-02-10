@@ -11,12 +11,12 @@
 }
 
 .state:hover {
-  fill: #A1A688;
+  fill: #BD6E00;
   pointer-events: inherit;
 }
 
 .country:hover {
-  fill: #A1A688;
+  fill: #BD6E00;
   pointer-events: inherit;
 }
 

@@ -199,7 +199,7 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
     d3.selectAll(".state")
       .style("fill", null)
       .attr("original-title", function(d) { return d.name; });;
-    d3.select(this).style("fill", "#CFDB7F");
+    d3.select(this).style("fill", "#F58F1B");
     if (selection && selection !== this) { d3.select(selection).style("fill", null);}
     selection = this;
     d = this.__data__;
@@ -281,7 +281,7 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
         "% " + d.name +  " natives<br>" + emigrants.get(bpl) +
         "/" + dest.pop + " residents" );
     });
-    d3.select(this).style("fill", "#CFDB7F");
+    d3.select(this).style("fill", "#F58F1B");
   });
 
   g.append("path")
