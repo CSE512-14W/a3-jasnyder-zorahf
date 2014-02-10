@@ -101,14 +101,12 @@ function ready(error, world, us, links, location, stcodes, cocodes) {
   var cpolygons = topojson.feature(world, world.objects.countries).features;
   var bpldToPoly = d3.map();
 
-  cstatics = cpolygons.filter(function(d) {
+  staticpolys = cpolygons.filter(function(d) {
     d.bpld = countryToBpld.get(d.id);
     if (d.bpld < 95000 && bpldByCode.get(d.bpld).count > 0) {
       bpldToPoly.set(d.bpld, d);
     }
-    else {
-      return true;
-    }
+    else { return true; }
   });
     
   spolygons.forEach(function(d) {
@@ -126,13 +124,25 @@ function ready(error, world, us, links, location, stcodes, cocodes) {
   var countries = g.append("g")
     .attr("class", "countries");
 
-  countries.selectAll("path")
-      .data(cpolygons)
+  var statics = countries.append("g")
+      .attr("class", "statics")
+    .selectAll("path")
+      .data(staticpolys)
     .enter().append("path")
-      .attr("class", "country")
-      .attr("title", function(d) { return countryToBpld.get(d.id); } )
-      .attr("id", function(d) { return "country-" + d.id; })
-      .attr("d", path);
+      .attr("class", "static")
+    .attr("d", path);
+    
+  var country = countries.selectAll("g")
+      .data(bpl_countries)
+    .enter().append("g")
+      .attr("class", "country");
+  
+  country.append("path")
+      .datum(function(d) {
+         return bpldToPoly.get(d.bpl);
+      })
+    .attr("class", "polygon")
+    .attr("d", path);
 
   countries.append("path")
       .datum(topojson.mesh(world, world.objects.countries, function(a, b) { return a !== b; }))
@@ -140,20 +150,21 @@ function ready(error, world, us, links, location, stcodes, cocodes) {
       .attr("d", path);
 
   var states = g.append("g")
-    .attr("class", "states")
-    .selectAll("g")
+    .attr("class", "states");
+  
+  var state = states.selectAll("g")
       .data(bpl_states)
     .enter().append("g")
       .attr("class", "state");
 
-  states.append("path")
+  state.append("path")
       .datum(function(d) { 
           return bpldToPoly.get(d.bpl);
       })
       .attr("class", "polygon")
       .attr("d", path);
   
-  states.append("g")
+  state.append("g")
        .attr("class", "edge")
      .selectAll("path")
        .data(function(d) { return d.incoming; })
@@ -166,8 +177,6 @@ function ready(error, world, us, links, location, stcodes, cocodes) {
       .datum(topojson.mesh(us, us.objects.layer1, function(a, b) { return a !== b; }))
       .attr("class", "stateb")
       .attr("d", path);
-   
-
 }
 
 function move() {
