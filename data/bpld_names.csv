@@ -1,4 +1,55 @@
 bpld,name
+00100,Alabama
+00200,Alaska
+00400,Arizona
+00500,Arkansas
+00600,California
+00800,Colorado
+00900,Connecticut
+01000,Delaware
+01100,District of Columbia
+01200,Florida
+01300,Georgia
+01500,Hawaii
+01600,Idaho
+01700,Illinois
+01800,Indiana
+01900,Iowa
+02000,Kansas
+02100,Kentucky
+02200,Louisiana
+02300,Maine
+02400,Maryland
+02500,Massachusetts
+02600,Michigan
+02700,Minnesota
+02800,Mississippi
+02900,Missouri
+03000,Montana
+03100,Nebraska
+03200,Nevada
+03300,New Hampshire
+03400,New Jersey
+03500,New Mexico
+03600,New York
+03700,North Carolina
+03800,North Dakota
+03900,Ohio
+04000,Oklahoma
+04100,Oregon
+04200,Pennsylvania
+04400,Rhode Island
+04500,South Carolina
+04600,South Dakota
+04700,Tennessee
+04800,Texas
+04900,Utah
+05000,Vermont
+05100,Virginia
+05300,Washington
+05400,West Virginia
+05500,Wisconsin
+05600,Wyoming
 10000,American Samoa
 10010,Samoa
 10500,Guam
