@@ -49,15 +49,19 @@ queue()
 function ready(error, world, us, links, location, stcodes, cocodes) {
   var bpldByCode = d3.map(),
       bpldToState = d3.map(),
-      bpldFromCountry = d3.map(),
+      stateToBpld = d3.map(),
+      bpldToCountry = d3.map(),
+      countryToBpld = d3.map(),
     positions = [];
 
   stcodes.forEach(function(d) {
     bpldToState.set(d.bpl, d.jsonstate);    
+    stateToBpld.set(d.jsonstate, d.bpl);
   });  
 
   cocodes.forEach(function(d) {
-    bpldFromCountry.set(d.iso, d.bpld);
+    bpldToCountry.set(d.bpld, d.iso);
+    countryToBpld.set(d.iso, d.bpld);
   });  
 
   location.forEach(function(d) {
@@ -71,6 +75,15 @@ function ready(error, world, us, links, location, stcodes, cocodes) {
     d.incoming = [];
   });
 
+  bpldByCode.set(41000, bpldByCode.get(41300)); // map england to UK
+  bpldByCode.set(41100, bpldByCode.get(41300)); // map scotland to UK
+  bpldByCode.set(41410, bpldByCode.get(41300)); // map NI to UK
+  bpldByCode.set(43610, bpldByCode.get(43600)); // map azores to portugal
+  bpldByCode.set(45200, bpldByCode.get(45213)); // map czechoslovakia to czech republic
+  bpldByCode.set(45700, bpldByCode.get(45710)); // map former yugoslavia to croatia
+  bpldByCode.set(46590, bpldByCode.get(46500)); // map USSR to russia
+  bpldByCode.set(53440, bpldByCode.get(53400)); // map israel to israel/palestine
+
   links.forEach(function(link) {
     var source = bpldByCode.get(link.Birthplace),
         target = bpldByCode.get(link.State),
@@ -79,25 +92,45 @@ function ready(error, world, us, links, location, stcodes, cocodes) {
     source.outgoing.push(link);
     target.incoming.push(link);
   });
+    
+  var withedges = location.filter(function(d) {
+    if (d.count = Math.max(d.incoming.length, d.outgoing.length) > 0) { return true; }
+  });
+    
+  var spolygons = topojson.feature(us, us.objects.layer1).features; 
+  var cpolygons = topojson.feature(world, world.objects.countries).features;
+  var bpldToPoly = d3.map();
+
+  cstatics = cpolygons.filter(function(d) {
+    d.bpld = countryToBpld.get(d.id);
+    if (d.bpld < 95000 && bpldByCode.get(d.bpld).count > 0) {
+      bpldToPoly.set(d.bpld, d);
+    }
+    else {
+      return true;
+    }
+  });
+    
+  spolygons.forEach(function(d) {
+    bpldToPoly.set(stateToBpld.get(d.id), d);
+  });
 
   var bpl_states = location.filter(function(d) {
-    if (d.bpl <= 11500) { return true; }
+    if (d.bpl <= 11500 && bpldToPoly.get(d.bpl)) { return true; }
   });
 
   var bpl_countries = location.filter(function(d) {
-    if (d.bpl > 11500 && d.bpl < 95000) { return true; }
+    if (d.bpl > 11500 && d.bpl < 95000 && bpldToPoly.get(d.bpl)) { return true; }
   });
 
   var countries = g.append("g")
     .attr("class", "countries");
 
-  var topo = world.objects.countries;
-
   countries.selectAll("path")
-      .data(topojson.feature(world, topo).features)
+      .data(cpolygons)
     .enter().append("path")
       .attr("class", "country")
-      .attr("title", function(d) { return bpldFromCountry.get(d.id); } )
+      .attr("title", function(d) { return countryToBpld.get(d.id); } )
       .attr("id", function(d) { return "country-" + d.id; })
       .attr("d", path);
 
@@ -115,8 +148,7 @@ function ready(error, world, us, links, location, stcodes, cocodes) {
 
   states.append("path")
       .datum(function(d) { 
-         var jsonid = bpldToState.get(d.bpl);
-         return topojson.feature(us, us.objects.layer1).features[jsonid];
+          return bpldToPoly.get(d.bpl);
       })
       .attr("class", "polygon")
       .attr("d", path);
