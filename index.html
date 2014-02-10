@@ -197,7 +197,7 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
   country.on("click", function() {
     d3.selectAll(".state").style("fill", null);
     d3.select(this).style("fill", "#CFDB7F");
-    if (selection) { d3.select(selection).style("fill", null);}
+    if (selection && selection !== this) { d3.select(selection).style("fill", null);}
     selection = this;
     d = this.__data__;
     emigrants = d.emigrants;
@@ -248,13 +248,16 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
 
   state.on("click", function() {
     d3.selectAll(".state").style("fill", null);
-    if (selection) { d3.select(selection).style("fill", null);}
+    if (selection && selection !== this) { d3.select(selection).style("fill", null);}
     selection = this;
     d = this.__data__.emigrants;
-    q = d3.scale.quantile().domain(d.values()).range(colorbrewer.PuBu[7])
+
+    domain = d3.map();
+    d.entries().forEach(function(d) { domain.set(d.key, d.value / bpldByCode.get(d.key).pop); });
+    q = d3.scale.quantile().domain(domain.values()).range(colorbrewer.PuBu[7])
     
     d.keys().forEach(function(bpl) {
-      d3.select("#bpld-" + bpl).style("fill", q(d.get(bpl)));
+      d3.select("#bpld-" + bpl).style("fill", q(domain.get(bpl)));
     });
   });  
 
