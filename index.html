@@ -161,7 +161,12 @@ function ready(error, world, us, links, location, stcodes, cocodes) {
       })
     .attr("class", "polygon")
     .attr("d", path);
-
+  
+  country.on("mouseover", function() {
+    d = this.__data__;
+    d.outgoing.
+  });
+   
   countries.append("path")
       .datum(topojson.mesh(world, world.objects.countries, function(a, b) { return a !== b; }))
       .attr("class", "boundary")
