@@ -259,7 +259,8 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
     d.keys().forEach(function(bpl) {
       d3.select("#bpld-" + bpl).style("fill", q(domain.get(bpl)));
     });
-  });  
+    d3.select(this).style("fill", "#CFDB7F");
+  });
 
   g.append("path")
       .datum(topojson.mesh(us, us.objects.layer1, function(a, b) { return a !== b; }))
