@@ -6,9 +6,8 @@ a3-jasnyder-zorahf
 1. Jeff Snyder jasnyder@uw.edu
 2. Zorah Fung zorahf@uw.edu
 
-## Project Name
+## United States Migration Explorer
 
-United States Migration Explorer
 
 The United States Migration Explorer uses 2012 census data to allow you to explore migration patterns to and from states
 in America.
@@ -25,7 +24,7 @@ Access our visualization at http://cse512-14w.github.io/a3-jasnyder-zorahf/ or d
 
 ## Story Board
 
-[link to your storyboard pdf file](storyboard.pdf?raw=true) here. 
+[Storyboard pdf here](storyboard.pdf?raw=true). 
 
 ### Changes between Storyboard and the Final Implementation
 
