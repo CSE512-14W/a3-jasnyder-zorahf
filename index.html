@@ -49,17 +49,19 @@ queue()
   .defer(d3.csv, "data/bpld_latlon.csv")
   .defer(d3.csv, "data/state_bpld.csv")
   .defer(d3.csv, "data/country_bpld.csv")
-  .defer(d3.csv, "data/bpld_country_names.csv")
+  .defer(d3.csv, "data/bpld_names.csv")
   .await(ready);
 
-function ready(error, world, us, links, location, stcodes, cocodes, conames) {
+function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
   var bpldByCode = d3.map(),
       bpldToState = d3.map(),
       stateToBpld = d3.map(),
       bpldToCountry = d3.map(), 
       countryToBpld = d3.map(),
       bpldToName = d3.map(),
-    positions = [];
+
+    positions = [],
+    selection = null;
 
   stcodes.forEach(function(d) {
     bpldToState.set(d.bpl, d.jsonstate);    
@@ -71,7 +73,7 @@ function ready(error, world, us, links, location, stcodes, cocodes, conames) {
     countryToBpld.set(d.iso, d.bpld);
   });
 
-  conames.forEach(function(d) {
+  bpldNames.forEach(function(d) {
     bpldToName.set(d.bpld, d.name);
   })  
 
@@ -101,7 +103,7 @@ function ready(error, world, us, links, location, stcodes, cocodes, conames) {
   links.forEach(function(link) {
     var source = bpldByCode.get(link.Birthplace),
         target = bpldByCode.get(link.State),
-        weight = parseFloat(link.Weight),
+        weight = Math.round(parseFloat(link.Weight) * 100),
         old,
         arc = {source: source, target: target, weight: weight};
     
@@ -140,11 +142,19 @@ function ready(error, world, us, links, location, stcodes, cocodes, conames) {
   });
 
   var bpl_states = location.filter(function(d) {
-    if (d.bpl <= 11500 && bpldToPoly.get(d.bpl)) { return true; }
+    if (d.bpl <= 11500 && bpldToPoly.get(d.bpl)) {
+       d.pop = d3.sum(d.immigrants.values())
+       d.totalnatives = d3.sum(d.emigrants.values())
+      return true; 
+    }
+    
   });
 
   var bpl_countries = location.filter(function(d) {
-    if (d.bpl > 11500 && d.bpl < 95000 && bpldToPoly.get(d.bpl)) { return true; }
+    if (d.bpl > 11500 && d.bpl < 95000 && bpldToPoly.get(d.bpl)) { 
+       d.totalnatives = d3.sum(d.emigrants.values())
+      return true; 
+    }
   });
 
   var countries = g.append("g")
@@ -176,45 +186,38 @@ function ready(error, world, us, links, location, stcodes, cocodes, conames) {
     .attr("d", path);
   
     $(".country").tipsy({
-      title: function() {
-        var d = this.__data__;
-        return "" + d.name;
-      }
-    })
-
-  country.on("mouseover", function() {
-    d = this.__data__;
-    emigrants = d.emigrants
-   // max = d3.max(d.values())
-    // = d3.min(d.values())
-    q = d3.scale.quantile().domain(emigrants.values()).range(colorbrewer.PuBu[7])
-    
-    emigrants.keys().forEach(function(bpl) {
-      d3.select("#bpld-" + bpl).style("fill", q(emigrants.get(bpl)));
+      gravity: function() {
+        var name = this.__data__.name;
+        if (name == "Russia" || name == "Norway" || name == "Canada")
+            { return 'n'; }
+        else { return 's'; }
+      },
     });
 
-    mouseCoord = d3.mouse(this);
+  country.on("click", function() {
+    d3.selectAll(".state").style("fill", null);
+    d3.select(this).style("fill", "#CFDB7F");
+    if (selection) { d3.select(selection).style("fill", null);}
+    selection = this;
+    d = this.__data__;
+    emigrants = d.emigrants;
+    domain = d3.map();
+    emigrants.entries().forEach(function(d) { domain.set(d.key, d.value / bpldByCode.get(d.key).pop); });
+    q = d3.scale.quantile().domain(domain.values()).range(colorbrewer.PuBu[7])
+    
+    emigrants.keys().forEach(function(bpl) {
+      d3.select("#bpld-" + bpl).style("fill", q(domain.get(bpl)));
+    });
 
-    //Update the tooltip position and value
-    d3.select("#tooltip")
-      //.style("left", 0 + "px")
-      //.style("top", 0 + "px")
-      .select("#value")
-      .text(d.name);
-
-    //Show the tooltip
-    d3.select("#tooltip").classed("hidden", false);
   });
 
-  country.on("mouseout", function() {
+  /*country.on("mouseout", function() {
     d = this.__data__;
     d.emigrants.keys().forEach(function(bpl) {
       d3.select("#bpld-" + bpl).style("fill", null);
     });
 
-    //Hide the tooltip
-    d3.select("#tooltip").classed("hidden", true);
-  });   
+  });*/   
 
   countries.append("path")
       .datum(topojson.mesh(world, world.objects.countries, function(a, b) { return a !== b; }))
@@ -228,9 +231,8 @@ function ready(error, world, us, links, location, stcodes, cocodes, conames) {
       .data(bpl_states)
     .enter().append("g")
       .attr("class", "state")
-      .attr("id", function(d) {
-        return "bpld-" + d.bpl;
-      });
+      .attr("id", function(d) { return "bpld-" + d.bpl; })
+      .attr("title", function(d) { return d.name; });
 
   state.append("path")
       .datum(function(d) { 
@@ -239,32 +241,22 @@ function ready(error, world, us, links, location, stcodes, cocodes, conames) {
       .attr("class", "polygon")
       .attr("d", path);
   
-  // state.append("g")
-  //      .attr("class", "edge")
-  //    .selectAll("path")
-  //      .data(function(d) { return d.incoming; })
-  //    .enter().append("path")
-  //      .attr("d", function(d) { 
-  //        return path({type: "LineString", coordinates: [d.source, d.target]});
-  //      });
+    $(".state").tipsy({
+      gravity: 's',
+    });
 
-   state.on("mouseover", function() {
+
+  state.on("click", function() {
+    d3.selectAll(".state").style("fill", null);
+    if (selection) { d3.select(selection).style("fill", null);}
+    selection = this;
     d = this.__data__.emigrants;
-   // max = d3.max(d.values())
-    // = d3.min(d.values())
     q = d3.scale.quantile().domain(d.values()).range(colorbrewer.PuBu[7])
     
     d.keys().forEach(function(bpl) {
       d3.select("#bpld-" + bpl).style("fill", q(d.get(bpl)));
     });
-  });
-
-  state.on("mouseout", function() {
-    d = this.__data__;
-    d.emigrants.keys().forEach(function(bpl) {
-      d3.select("#bpld-" + bpl).style("fill", null);
-    });
-  });     
+  });  
 
   g.append("path")
       .datum(topojson.mesh(us, us.objects.layer1, function(a, b) { return a !== b; }))
