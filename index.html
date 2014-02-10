@@ -73,6 +73,8 @@ function ready(error, world, us, links, location, stcodes, cocodes) {
     d.y = position[1];
     d.outgoing = [];
     d.incoming = [];
+    d.emigrants = d3.map();
+    d.immigrants = d3.map();
   });
 
   bpldByCode.set(41000, bpldByCode.get(41300)); // map england to UK
@@ -87,14 +89,26 @@ function ready(error, world, us, links, location, stcodes, cocodes) {
   links.forEach(function(link) {
     var source = bpldByCode.get(link.Birthplace),
         target = bpldByCode.get(link.State),
-        link = {source: source, target: target, weight: link.Weight};
+        weight = parseFloat(link.Weight),
+        old,
+        arc = {source: source, target: target, weight: weight};
     
-    source.outgoing.push(link);
-    target.incoming.push(link);
+    source.outgoing.push(arc);
+    old = source.emigrants.get(target.bpl);
+    if (old !== undefined) {
+      source.emigrants.set(target.bpl, old + weight);
+    }
+    else { source.emigrants.set(target.bpl, weight); }
+    target.incoming.push(arc);
+    old = target.immigrants.get(source.bpl);
+    if (old !== undefined) {
+      target.immigrants.set(source.bpl, old + weight);
+    }
+    else { target.immigrants.set(source.bpl, weight); }
   });
     
   var withedges = location.filter(function(d) {
-    if (d.count = Math.max(d.incoming.length, d.outgoing.length) > 0) { return true; }
+    if ((d.count = Math.max(d.incoming.length, d.outgoing.length)) > 0) { return true; }
   });
     
   var spolygons = topojson.feature(us, us.objects.layer1).features; 
@@ -132,10 +146,14 @@ function ready(error, world, us, links, location, stcodes, cocodes) {
       .attr("class", "static")
     .attr("d", path);
     
+  bpl_countries.unshift(null); // hack because first member of array
+  //  does not have an object created for it for some reason on the next line
+  
   var country = countries.selectAll("g")
       .data(bpl_countries)
     .enter().append("g")
-      .attr("class", "country");
+      .attr("class", "country")
+      .attr("bpl", function(d) { return d.bpl; });
   
   country.append("path")
       .datum(function(d) {
