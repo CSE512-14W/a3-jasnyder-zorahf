@@ -11,7 +11,7 @@
 }
 
 .state:hover {
-  fill: orange;
+  fill: #A1A688;
   pointer-events: inherit;
 }
 
