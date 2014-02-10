@@ -2,57 +2,204 @@
 <meta charset="utf-8">
 <style>
 
-.counties {
+.overlay {
   fill: none;
 }
 
-.states {
+.country {
+  fill: #000;
+}
+
+.state {
+  fill: #cccccc;
+}
+
+.state:hover {
+  fill: orange;
+  pointer-events: inherit;
+}
+
+.country:hover {
+  fill: red;
+  pointer-events: inherit;
+}
+
+.boundary {
   fill: none;
   stroke: #fff;
   stroke-linejoin: round;
+  stroke-linecap: round;
 }
-</style>
-<body>
-<script src="http://d3js.org/d3.v3.min.js"></script>
-<script src="http://d3js.org/queue.v1.min.js"></script>
-<script src="http://d3js.org/topojson.v1.min.js"></script>
-<script>
 
+.stateb {
+  fill: none;
+  stroke: #000;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+#country-840 {
+  fill: none;
+}
+
+.edge {
+  display: none;
+  fill: none;
+  stroke: #000;
+  z-index: 100000000000000000;
+}
+
+.state:hover .edge {
+  display: inline;
+}
+
+</style>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
+<script src="http://d3js.org/queue.v1.min.js"></script>
+<body>
+<script>
 
 var width = 960,
     height = 500;
 
-var rateById = d3.map();
+var projection = d3.geo.mercator()
+    .translate([0, 0])
+    .scale(width / 2 / Math.PI);
 
-var quantize = d3.scale.quantize()
-    .domain([0, .15])
-    .range(d3.range(9).map(function(i) { return "q" + i + "-9"; }));
+var zoom = d3.behavior.zoom()
+    .scaleExtent([1, 8])
+    .on("zoom", move);
 
-var path = d3.geo.path();
+var path = d3.geo.path()
+    .projection(projection);
 
 var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height)
+  .append("g")
+    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")")
+    .call(zoom);
+
+var g = svg.append("g");
+                               
+svg.append("rect")
+    .attr("class", "overlay")
+    .attr("x", -width / 2)
+    .attr("y", -height / 2)
     .attr("width", width)
     .attr("height", height);
 
 queue()
-    .defer(d3.json, "json/us.json")
-    .defer(d3.tsv, "unemployment.tsv", function(d) {
-    rateById.set(d.id, +d.rate); })
-    .await(ready);
+  .defer(d3.json, "json/world.json")
+  .defer(d3.json, "json/us.json")
+  .defer(d3.csv, "data/links.csv")
+  .defer(d3.csv, "data/bpld_latlon.csv")
+  .defer(d3.csv, "data/state_bpld.csv")
+  .defer(d3.csv, "data/country_bpld.csv")
+  .await(ready);
 
-function ready(error, us) {
-  svg.append("g")
-      .attr("class", "counties")
-    .selectAll("path")
-      .data(topojson.feature(us, us.objects.counties).features)
+function ready(error, world, us, links, location, stcodes, cocodes) {
+  var bpldByCode = d3.map(),
+      bpldToState = d3.map(),
+      bpldFromCountry = d3.map(),
+    positions = [];
+
+  stcodes.forEach(function(d) {
+    bpldToState.set(d.bpl, d.jsonstate);    
+  });  
+
+  cocodes.forEach(function(d) {
+    bpldFromCountry.set(d.iso, d.bpld);
+  });  
+
+  location.forEach(function(d) {
+    bpldByCode.set(d.bpl, d);
+    d[0] = +d.longitude;
+    d[1] = +d.latitude;
+    var position = projection(d); 
+    d.x = position[0];
+    d.y = position[1];
+    d.outgoing = [];
+    d.incoming = [];
+  });
+
+  links.forEach(function(link) {
+    var source = bpldByCode.get(link.Birthplace),
+        target = bpldByCode.get(link.State),
+        link = {source: source, target: target, weight: link.Weight};
+    
+    source.outgoing.push(link);
+    target.incoming.push(link);
+  });
+
+  var bpl_states = location.filter(function(d) {
+    if (d.bpl <= 11500) { return true; }
+  });
+
+  var bpl_countries = location.filter(function(d) {
+    if (d.bpl > 11500 && d.bpl < 95000) { return true; }
+  });
+
+  var countries = g.append("g")
+    .attr("class", "countries");
+
+                               
+                               
+  var topo = world.objects.countries;
+
+  countries.selectAll("path")
+      .data(topojson.feature(world, topo).features)
     .enter().append("path")
-      .attr("class", function(d) { return "q2-9"; })
+      .attr("class", "country")
+      .attr("title", function(d) { return bpldFromCountry.get(d.id); } )
+      .attr("id", function(d) { return "country-" + d.id; })
       .attr("d", path);
 
-  svg.append("path")
-      .datum(topojson.mesh(us, us.objects.states, function(a, b) {
-      return a !== b; }))
-      .attr("class", "states")
+  countries.append("path")
+      .datum(topojson.mesh(world, world.objects.countries, function(a, b) { return a !== b; }))
+      .attr("class", "boundary")
       .attr("d", path);
+
+  var states = g.append("g")
+    .attr("class", "states")
+    .selectAll("g")
+      .data(bpl_states)
+    .enter().append("g")
+      .attr("class", "state");
+
+  states.append("path")
+      .datum(function(d) { 
+         var jsonid = bpldToState.get(d.bpl);
+         return topojson.feature(us, us.objects.layer1).features[jsonid];
+      })
+      .attr("class", "polygon")
+      .attr("d", path);
+  
+  states.append("g")
+       .attr("class", "edge")
+     .selectAll("path")
+       .data(function(d) { return d.incoming; })
+     .enter().append("path")
+       .attr("d", function(d) { 
+         return path({type: "LineString", coordinates: [d.source, d.target]});
+       });
+
+  g.append("path")
+      .datum(topojson.mesh(us, us.objects.layer1, function(a, b) { return a !== b; }))
+      .attr("class", "stateb")
+      .attr("d", path);
+   
+
 }
+
+function move() {
+  var t = d3.event.translate,
+      s = d3.event.scale;
+  t[0] = Math.min(width / 2 * (s - 1), Math.max(width / 2 * (1 - s), t[0]));
+  t[1] = Math.min(height / 2 * (s - 1) + 230 * s, Math.max(height / 2 * (1 - s) - 230 * s, t[1]));
+  zoom.translate(t);
+  g.style("stroke-width", 1 / s).attr("transform", "translate(" + t + ")scale(" + s + ")");
+}
+
 </script>
