@@ -12,7 +12,7 @@ a3-jasnyder-zorahf
 The United States Migration Explorer uses 2012 census data to allow you to explore migration patterns to and from states
 in America.
 
-By clicking on a state or country, a user can see which states that people born in selected state or country moved to. The U.S. map is colored in seven quantiles, based on the ratio of the emigrants from the selected region to the population of the colored state. Darker colors signify a higher ratio. Once a region has been selected, users may hover over individual states to view the numerical representation of the ratio, as well the number of immigrants from the selected region.
+By clicking on a state or country, a user can see which states that people born in selected state or country moved to. The U.S. map is colored in seven quantiles, based on the ratio of the emigrants from the selected region to the population of the colored state. Darker colors signify a higher ratio. Once a region has been selected, users may hover over individual states to view the numerical representation of the ratio, as well the number of immigrants from the selected region. The map can be zoomed and translated via mouse clicks and drags.
 
 A "mode" button toggles between "source" and "destination" modes. "Source" mode exhibits the behavior described above. "Destination" mode changes the selected region to show where the people currently living in the selected region go.
 
@@ -28,7 +28,7 @@ Access our visualization at http://cse512-14w.github.io/a3-jasnyder-zorahf/ or d
 
 ### Changes between Storyboard and the Final Implementation
 
-As it turns out, our original idea was a bit more work than we anticipated (surprise!), epsecially given that we were not very familiar with d3 and javascript.
+As it turns out, our original idea was a bit more work than we anticipated (surprise!), epsecially given that we were not very familiar with d3 and javascript. Not only was the animation more work than we had time to deal with, having connecting lines between source and destination locations made the map extremely clustered and hard to read -- people go lots of different places! Dots to represent people would be even harder to read, especially given so many dots. This lead us to change the connection between regions to be visualized through color, which varies in darkness based on the ratio of people who moved from the source to the destination locations. At an intermediate step, we mapped color to the raw number of people from source to destination, however, this displayed the uninteresting trend that lots of people go to larger states. 
 
 ## Development Process
 
