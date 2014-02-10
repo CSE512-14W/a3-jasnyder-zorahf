@@ -97,11 +97,11 @@ bpld,name
 26072,Netherlands Antilles
 26073,Bonaire
 26074,Curacao
-26075,Dutch St. Maarten
+26075,St. Maarten
 26076,Saba
 26077,St. Eustatius
 26079,Dutch Caribbean
-26080,French St. Maarten
+26080,St. Martin
 26081,Guadeloupe
 26082,Martinique
 26083,St. Barthelemy
@@ -121,7 +121,7 @@ bpld,name
 30025,Colombia
 30030,Ecuador
 30035,French Guiana
-30040,Guyana/British Guiana
+30040,Guyana
 30045,Paraguay
 30050,Peru
 30055,Suriname
@@ -130,7 +130,7 @@ bpld,name
 30090,South America
 30091,South and Central America
 40000,Denmark
-40010,Faeroe Islands
+40010,Faroe Islands
 40100,Finland
 40200,Iceland
 40300,Lapland
@@ -252,7 +252,7 @@ bpld,name
 45710,Croatia
 45720,Montenegro
 45730,Serbia
-45740,Bosnia
+45740,Bosnia and Herzegovina
 45750,Dalmatia
 45760,Slovonia
 45770,Carniola
@@ -264,9 +264,9 @@ bpld,name
 46100,Latvia
 46200,Lithuania
 46300,Baltic States
-46500,Other USSR/Russia
-46510,Byelorussia
-46520,Moldavia
+46500,Russia
+46510,Belarus
+46520,Moldova
 46521,Bessarabia
 46530,Ukraine
 46540,Armenia
@@ -274,7 +274,7 @@ bpld,name
 46542,Republic of Georgia
 46543,Kazakhstan
 46544,Kirghizia
-46545,Tadzhik
+46545,Tahikistan
 46546,Turkmenistan
 46547,Uzbekistan
 46548,Siberia
@@ -286,7 +286,7 @@ bpld,name
 50030,Mongolia
 50040,Taiwan
 50100,Japan
-50200,Korea
+50200,South Korea
 50210,North Korea
 50220,South Korea
 50900,East Asia
@@ -307,9 +307,9 @@ bpld,name
 52100,India
 52110,Bangladesh
 52120,Bhutan
-52130,Burma (Myanmar)
+52130,Myanmar
 52140,Pakistan
-52150,Sri Lanka (Ceylon)
+52150,Sri Lanka
 52200,Iran
 52300,Maldives
 52400,Nepal
@@ -334,7 +334,7 @@ bpld,name
 54210,European Turkey
 54220,Asian Turkey
 54300,United Arab Emirates
-54400,Yemen Arab Republic (North)
+54400,Yemen
 54500,Yemen
 54600,Persian Gulf States
 54700,Middle East
@@ -345,7 +345,7 @@ bpld,name
 60000,Africa
 60010,Northern Africa
 60011,Algeria
-60012,Egypt/United Arab Rep.
+60012,Egypt
 60013,Libya
 60014,Morocco
 60015,Sudan
@@ -412,7 +412,7 @@ bpld,name
 60091,Botswana
 60092,Lesotho
 60093,Namibia
-60094,South Africa (Union of)
+60094,South Africa
 60095,Swaziland
 60096,Southern Africa
 60099,Africa
@@ -426,7 +426,7 @@ bpld,name
 71011,Norfolk Islands
 71012,Papua New Guinea
 71013,Solomon Islands
-71014,Vanuatu (New Hebrides)
+71014,Vanuatu
 71019,Melanesia
 71020,Cook Islands
 71021,Fiji
