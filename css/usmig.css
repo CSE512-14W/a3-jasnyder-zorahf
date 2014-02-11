@@ -6,6 +6,10 @@
   fill: #9C9C9C;
 }
 
+.country_destmode {
+  fill: #9C9C9C;
+}
+
 .state {
   fill: #cccccc;
 }
@@ -22,6 +26,13 @@
 
 .static {
   fill: #9C9C9C;
+}
+
+label {
+  font-family: Helvetica;
+  font-size: 11pt;
+  color: #9C9C9C;
+  margin-left: 20px;
 }
 
 .boundary {
