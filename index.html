@@ -250,17 +250,17 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
       emigrants.entries().forEach(function(d) { domain.set(d.key, d.value / bpldByCode.get(d.key).pop *100); });
       q = d3.scale.quantile().domain(domain.values()).range(colorbrewer.PuBu[7])
           quantiles = q.quantiles().map(function(item) { return item; });
-    quantiles.unshift(0);
-    quantiles.push(d3.max(domain.values()));
-    qscale = d3.scale.quantile().domain(quantiles).range([0,20,40,60,80,100,120,140]);
-    var qaxis = d3.svg.axis()
-      .scale(qscale)
-      .orient("right")
-      .tickSize(6)
-      .ticks(8)
-      .tickFormat(d3.format(".3f"));
-    legendLabels
-        .call(qaxis);
+      quantiles.unshift(0);
+      quantiles.push(d3.max(domain.values()));
+      qscale = d3.scale.quantile().domain(quantiles).range([0,20,40,60,80,100,120,140]);
+      var qaxis = d3.svg.axis()
+        .scale(qscale)
+        .orient("right")
+        .tickSize(6)
+        .ticks(8)
+        .tickFormat(d3.format(".3f"));
+      legendLabels
+          .call(qaxis);
       emigrants.keys().forEach(function(bpl) {
         dest = bpldByCode.get(bpl);
         d3.select("#bpld-" + bpl)
@@ -360,7 +360,7 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
           .style("fill", q(domain.get(bpl)))
           .attr("original-title", src.name + "<br>" + (domain.get(bpl)).toFixed(3) +
           "% " + d.name +  " natives<br>" + immigrants.get(bpl) +
-          "/" + src.pop + " residents" );
+          "/" + d.pop + " residents" );
       });      
     }
     d3.select(this).style("fill", "#F58F1B");
@@ -373,96 +373,25 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
 
   d3.select("#SourceButton")
     .on("click", function() {
-      // if (selection) {
-      //   d = selection.__data__;
-      //   emigrants = d.emigrants;
-      //   domain = d3.map();
-      //   emigrants.entries().forEach(function(d) { domain.set(d.key, d.value / bpldByCode.get(d.key).pop); });
-      //   q = d3.scale.quantile().domain(domain.values()).range(colorbrewer.PuBu[7])
-        
-      //   emigrants.keys().forEach(function(bpl) {
-      //     dest = bpldByCode.get(bpl);
-      //     d3.select("#bpld-" + bpl)
-      //       .style("fill", q(domain.get(bpl)))
-      //       .attr("original-title", dest.name + "<br>" + (domain.get(bpl) * 100).toFixed(3) +
-      //       "% " + d.name +  " natives<br>" + emigrants.get(bpl) +
-      //       "/" + dest.pop + " residents" );
-      //   });
-      //   d3.select("#bpld-" + selection.__data__.bpl).style("fill", "#F58F1B");
-      //   if (selection.__data__.bpl <= 11500) {
-      //     d3.selectAll(".country_destmode")
-      //       .attr("original-title", function(d) { return d.name; });
-      //     d3.selectAll(".country")
-      //       .attr("original-title", function(d) { return d.name; });
-      //   }
-      // } else {
-      //   d3.selectAll(".country_destmode")
-      //     .attr("original-title", function(d) { return d.name; });
-      //   d3.selectAll(".country")
-      //     .attr("original-title", function(d) { return d.name; });
-      //   d3.selectAll(".state")
-      //     .attr("original-title", function(d) { return d.name; }); 
-      // }
-
-      // countries.selectAll("g")
-      //   .attr("class", "country")
-      //   .style("fill", "#9C9C9C");
-
-      // if (selection) {
-      //   d3.select("#bpld-" + selection.__data__.bpl).style("fill", "#F58F1B");
-      // }
       countries.selectAll("g")
+        .attr("original-title", function (d) {if (d) {return d.name;} else {return "";}})
         .attr("class", "country")
         .style("fill", null);
       states.selectAll("g")
+        .attr("original-title", function (d) {if (d) {return d.name;} else {return "";}})
         .style("fill", null);    
       selection = null;
     });
 
   d3.select("#DestinationButton")
     .on("click", function() {
-      // if (selection) {
-      //   if (selection.__data__.bpl <= 11500) {
-      //     d = selection.__data__;
-      //     immigrants = d.immigrants;
-      //     domain = d3.map();
-      //     immigrants.entries().forEach(function(src) { domain.set(src.key, src.value / d.pop); });
-      //     q = d3.scale.quantile().domain(domain.values()).range(colorbrewer.PuBu[7])
-          
-      //     immigrants.keys().forEach(function(bpl) {
-      //       src = bpldByCode.get(bpl);
-      //       d3.select("#bpld-" + bpl)
-      //         .style("fill", q(domain.get(bpl)))
-      //         .attr("original-title", src.name + "<br>" + (domain.get(bpl) * 100).toFixed(3) +
-      //         "% " + d.name +  " natives<br>" + immigrants.get(bpl) +
-      //         "/" + src.pop + " residents" );
-      //     });
-      //     d3.select("#bpld-" + selection.__data__.bpl).style("fill", "#F58F1B");         
-      //   } else {
-      //     d3.select("#bpld-" + selection.__data__.bpl).style("fill", null);
-      //     states.selectAll("g").style("fill", null);
-      //     selection = null
-
-      //     d3.selectAll(".country_destmode")
-      //       .attr("original-title", function(d) { return d.name; });
-      //     d3.selectAll(".country")
-      //       .attr("original-title", function(d) { return d.name; });
-      //     d3.selectAll(".state")
-      //       .attr("original-title", function(d) { return d.name; }); 
-      //   }
-      // } else {
-      //   d3.selectAll(".country_destmode")
-      //     .attr("original-title", function(d) { return d.name; });
-      //   d3.selectAll(".country")
-      //     .attr("original-title", function(d) { return d.name; });
-      //   d3.selectAll(".state")
-      //     .attr("original-title", function(d) { return d.name; });     
-      // }
 
       countries.selectAll("g")
+        .attr("original-title", function (d) {if (d) {return d.name;} else {return "";}})
         .attr("class", "country_destmode")
         .style("fill", null);
       states.selectAll("g")
+        .attr("original-title", function (d) {if (d) {return d.name;} else {return "";}})
         .style("fill", null);    
       selection = null;
     });
