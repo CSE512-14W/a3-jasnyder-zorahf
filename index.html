@@ -9,6 +9,8 @@
 <link href="css/usmig.css" rel="stylesheet" type="text/css" />
 <link href="css/tipsy.css" rel="stylesheet" type="text/css" />
 <body>
+  <title>United States Migration Explorer</title>
+  <h1>United States Migration Explorer</h1>
 <script>
 
 var width = 960,
@@ -316,60 +318,98 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
 
   d3.select("#SourceButton")
     .on("click", function() {
-      if (selection) {
-        d = selection.__data__;
-        emigrants = d.emigrants;
-        domain = d3.map();
-        emigrants.entries().forEach(function(d) { domain.set(d.key, d.value / bpldByCode.get(d.key).pop); });
-        q = d3.scale.quantile().domain(domain.values()).range(colorbrewer.PuBu[7])
+      // if (selection) {
+      //   d = selection.__data__;
+      //   emigrants = d.emigrants;
+      //   domain = d3.map();
+      //   emigrants.entries().forEach(function(d) { domain.set(d.key, d.value / bpldByCode.get(d.key).pop); });
+      //   q = d3.scale.quantile().domain(domain.values()).range(colorbrewer.PuBu[7])
         
-        emigrants.keys().forEach(function(bpl) {
-          dest = bpldByCode.get(bpl);
-          d3.select("#bpld-" + bpl)
-            .style("fill", q(domain.get(bpl)))
-            .attr("original-title", dest.name + "<br>" + (domain.get(bpl) * 100).toFixed(3) +
-            "% " + d.name +  " natives<br>" + emigrants.get(bpl) +
-            "/" + dest.pop + " residents" );
-        });
-      }
+      //   emigrants.keys().forEach(function(bpl) {
+      //     dest = bpldByCode.get(bpl);
+      //     d3.select("#bpld-" + bpl)
+      //       .style("fill", q(domain.get(bpl)))
+      //       .attr("original-title", dest.name + "<br>" + (domain.get(bpl) * 100).toFixed(3) +
+      //       "% " + d.name +  " natives<br>" + emigrants.get(bpl) +
+      //       "/" + dest.pop + " residents" );
+      //   });
+      //   d3.select("#bpld-" + selection.__data__.bpl).style("fill", "#F58F1B");
+      //   if (selection.__data__.bpl <= 11500) {
+      //     d3.selectAll(".country_destmode")
+      //       .attr("original-title", function(d) { return d.name; });
+      //     d3.selectAll(".country")
+      //       .attr("original-title", function(d) { return d.name; });
+      //   }
+      // } else {
+      //   d3.selectAll(".country_destmode")
+      //     .attr("original-title", function(d) { return d.name; });
+      //   d3.selectAll(".country")
+      //     .attr("original-title", function(d) { return d.name; });
+      //   d3.selectAll(".state")
+      //     .attr("original-title", function(d) { return d.name; }); 
+      // }
 
+      // countries.selectAll("g")
+      //   .attr("class", "country")
+      //   .style("fill", "#9C9C9C");
+
+      // if (selection) {
+      //   d3.select("#bpld-" + selection.__data__.bpl).style("fill", "#F58F1B");
+      // }
       countries.selectAll("g")
         .attr("class", "country")
         .style("fill", null);
-
-      if (selection) {
-        d3.select("#bpld-" + selection.__data__.bpl).style("fill", "#F58F1B");
-      }
+      states.selectAll("g")
+        .style("fill", null);    
+      selection = null;
     });
 
   d3.select("#DestinationButton")
     .on("click", function() {
-      if (selection) {
-        if (selection.__data__.bpl <= 11500) {
-          d = selection.__data__;
-          immigrants = d.immigrants;
-          domain = d3.map();
-          immigrants.entries().forEach(function(src) { domain.set(src.key, src.value / d.pop); });
-          q = d3.scale.quantile().domain(domain.values()).range(colorbrewer.PuBu[7])
+      // if (selection) {
+      //   if (selection.__data__.bpl <= 11500) {
+      //     d = selection.__data__;
+      //     immigrants = d.immigrants;
+      //     domain = d3.map();
+      //     immigrants.entries().forEach(function(src) { domain.set(src.key, src.value / d.pop); });
+      //     q = d3.scale.quantile().domain(domain.values()).range(colorbrewer.PuBu[7])
           
-          immigrants.keys().forEach(function(bpl) {
-            src = bpldByCode.get(bpl);
-            d3.select("#bpld-" + bpl)
-              .style("fill", q(domain.get(bpl)))
-              .attr("original-title", src.name + "<br>" + (domain.get(bpl) * 100).toFixed(3) +
-              "% " + d.name +  " natives<br>" + immigrants.get(bpl) +
-              "/" + src.pop + " residents" );
-          });
-          d3.select("#bpld-" + selection.__data__.bpl).style("fill", "#F58F1B");         
-        } else {
-          d3.select("#bpld-" + selection.__data__.bpl).style("fill", null);
-          states.selectAll("g").style("fill", null);
-          selection = null
-        }
-      } 
+      //     immigrants.keys().forEach(function(bpl) {
+      //       src = bpldByCode.get(bpl);
+      //       d3.select("#bpld-" + bpl)
+      //         .style("fill", q(domain.get(bpl)))
+      //         .attr("original-title", src.name + "<br>" + (domain.get(bpl) * 100).toFixed(3) +
+      //         "% " + d.name +  " natives<br>" + immigrants.get(bpl) +
+      //         "/" + src.pop + " residents" );
+      //     });
+      //     d3.select("#bpld-" + selection.__data__.bpl).style("fill", "#F58F1B");         
+      //   } else {
+      //     d3.select("#bpld-" + selection.__data__.bpl).style("fill", null);
+      //     states.selectAll("g").style("fill", null);
+      //     selection = null
+
+      //     d3.selectAll(".country_destmode")
+      //       .attr("original-title", function(d) { return d.name; });
+      //     d3.selectAll(".country")
+      //       .attr("original-title", function(d) { return d.name; });
+      //     d3.selectAll(".state")
+      //       .attr("original-title", function(d) { return d.name; }); 
+      //   }
+      // } else {
+      //   d3.selectAll(".country_destmode")
+      //     .attr("original-title", function(d) { return d.name; });
+      //   d3.selectAll(".country")
+      //     .attr("original-title", function(d) { return d.name; });
+      //   d3.selectAll(".state")
+      //     .attr("original-title", function(d) { return d.name; });     
+      // }
 
       countries.selectAll("g")
-        .attr("class", "country_destmode");
+        .attr("class", "country_destmode")
+        .style("fill", null);
+      states.selectAll("g")
+        .style("fill", null);    
+      selection = null;
     });
 
 }
