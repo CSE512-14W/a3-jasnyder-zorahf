@@ -52,3 +52,21 @@
 .state:hover .edge {
   display: inline;
 }
+
+.axis {
+    shape-rendering: crispEdges;
+    font: 10px sans-serif;
+}
+.y.axis line {
+    stroke: #ccc;
+}
+.y.axis path {
+    display: none;
+}
+.colors .q0-7{fill:rgb(241,238,246)}
+.colors .q1-7{fill:rgb(208,209,230)}
+.colors .q2-7{fill:rgb(166,189,219)}
+.colors .q3-7{fill:rgb(116,169,207)}
+.colors .q4-7{fill:rgb(54,144,192)}
+.colors .q5-7{fill:rgb(5,112,176)}
+.colors .q6-7{fill:rgb(3,78,123)}
