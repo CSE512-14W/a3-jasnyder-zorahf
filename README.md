@@ -9,12 +9,13 @@ a3-jasnyder-zorahf
 ## United States Migration Explorer
 
 
-The United States Migration Explorer uses 2012 census data to allow you to explore migration patterns to and from states
-in America.
+The United States Migration Explorer uses 2012 American Community Survey data to allow you to explore migration patterns to and from states in the US.
 
-By clicking on a state or country, a user can see where people from the selected region go from a colored map of destinations. The U.S. map is colored in seven quantiles, based on the ratio of the emigrants from the selected region to the population of the colored state. Darker colors signify a higher ratio. Once a region has been selected, users may hover over individual states to view the numerical representation of the ratio, as well the number of immigrants from the selected region. The map can be zoomed and translated via mouse clicks and drags.
+The map is colored in seven quantiles. In "source mode", by selecting a state or country, the user can see migration patterns from that region, or what state people born in the selected region currently live in. In this mode, states are colored by the ratio of (immigrants to that state from the selected region) / (that state's total population). Darker colors signify a higher ratio. 
 
-A "mode" button toggles between "source" and "destination" modes. "Source" mode exhibits the behavior described above. "Destination" mode changes the selected region to show where the people currently living in the selected region come from.
+In "destination mode", by selecting a state, the user can see migration patterns to that state, or what state or country residents of the selected state were born in. In this mode, regions are colored by the ratio of (emigrants from that region to the selected state) / (the selected state's total population). Again, darker colors signify a higher ratio. 
+
+A toggle button switches modes. For both modes, we provide details on demand by hovering. The map can be zoomed and translated via mouse clicks and drags.
 
 ## Running Instructions
 
@@ -26,13 +27,8 @@ Access our visualization at http://cse512-14w.github.io/a3-jasnyder-zorahf/ or d
 
 ### Changes between Storyboard and the Final Implementation
 
-As it turns out, our original idea was a bit more work than we anticipated (surprise!), epsecially given that we were not very familiar with d3 and javascript. Not only was the animation more work than we had time to deal with, having connecting lines between source and destination locations made the map extremely clustered and hard to read -- people go lots of different places! Dots to represent people would be even harder to read, especially given so many dots. This lead us to change the connection between regions to be visualized through color, which varies in darkness based on the ratio of people who moved from the source to the destination locations. Therefore, we decided to change our mapping to a chloropleth color mapping, mapping the raw number of people that migrated from source to destination. However, this displayed the uninteresting trend that lots of people go to larger states. Therefore, we changed to a ratio representation, where the value of the color scale represented the percentage of residents of a given state from the selected country. We believe that this highlights many interesting trends. Try it out and see for yourself!
+As it turns out, our original idea was a bit more work than we anticipated (surprise!), epsecially given that we were not very familiar with d3 and javascript. Not only was the animation execessively complex to implement, displaying connecting lines between source and destination locations made the map extremely cluttered and hard to read -- our graph of connections is extremely dense! Using dots to represent individuals would have cluttered the screen even more, especially given that our original data has 15,000,000 rows. Therefore, we decided to change our mapping to a chloropleth color mapping. We originally mapped color to the raw number of people that migrated from source to destination. However, this displayed the uninteresting trend that larger states have more immigrants. Therefore, we changed to a ratio representation, where the value of the color scale represented the percentage of residents of a given state from the selected country. We believe that this highlights many interesting trends. Try it out and see for yourself!
 
 ## Development Process
 
-Everything took longer than we originally aniticipated. We spent a long time picking our data set, brainstorming
-different questions based on a variety of attributes of the data, and iterating through visualization ideas until 
-we settled on a final storyboard. We then spent few hours more hours sifting through geographic examples to both
-give ourselves some base code, as well as give us an idea of what sorts of map visualizations could be created
-with d3. While developing the visualization itself, we coded and updated our data somewhat in parallel. Most of our
-time (many, many hours) was sunk into reformatting or modifying imperfect data, much of which had to be done either programmatically or manually. We worked through all of our problems together as a pair (rather than separately in parallel) from start to finish.
+Every part of the process took longer than we originally aniticipated. We spent a long time selecting and trimming our data set, brainstorming different questions that users might ask, and iterating through visualization ideas until we settled on a final storyboard. We then spent few hours more hours sifting through examples of geographic d3 visualizations, both to use as a base, as well as to give ourselves an idea of the range of possibilities. While developing the visualization itself, we coded and updated our data in parallel. Most of our time (many, many hours) was sunk into reformatting or modifying imperfect data, much of which had to be done either programmatically or manually. We worked through all of our problems together as a pair (rather than separately in parallel) from start to finish. Overall, we spent perhaps 40 man-hours dealing with data issues and 30 man-hours coding.
