@@ -61,6 +61,28 @@ svg.append("rect")
     .attr("width", width)
     .attr("height", height);
 
+var legend = svg.append("g")
+    .attr("id", "legend")
+    .attr("class", "colors")
+
+legend.selectAll(".colorbar")
+  .data([0,1,2,3,4,5,6])
+  .enter().append("svg:rect")
+  .attr("y", function(d) { return d*20; })
+  .attr("height", "20px")
+  .attr("width", "20px")
+  .attr("x", -width / 2)
+  .attr("transform", "translate(0," + ((height / 2) - 150) + ")")
+  .attr("class", function(d) { return "q" + d + "-7"; })
+  .attr("stroke", "none");
+
+var legendLabels = svg.append("g")
+    .attr("id", "laxis")
+    .attr("class", "y axis")
+    .attr("transform", "translate(" + ((-width / 2) + 20) + "," +
+    ((height / 2) - 150) + ")")
+
+
 queue()
   .defer(d3.json, "json/world.json")
   .defer(d3.json, "json/us.json")
@@ -225,14 +247,25 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
       d = this.__data__;
       emigrants = d.emigrants;
       domain = d3.map();
-      emigrants.entries().forEach(function(d) { domain.set(d.key, d.value / bpldByCode.get(d.key).pop); });
+      emigrants.entries().forEach(function(d) { domain.set(d.key, d.value / bpldByCode.get(d.key).pop *100); });
       q = d3.scale.quantile().domain(domain.values()).range(colorbrewer.PuBu[7])
-      
+          quantiles = q.quantiles().map(function(item) { return item; });
+    quantiles.unshift(0);
+    quantiles.push(d3.max(domain.values()));
+    qscale = d3.scale.quantile().domain(quantiles).range([0,20,40,60,80,100,120,140]);
+    var qaxis = d3.svg.axis()
+      .scale(qscale)
+      .orient("right")
+      .tickSize(6)
+      .ticks(8)
+      .tickFormat(d3.format(".3f"));
+    legendLabels
+        .call(qaxis);
       emigrants.keys().forEach(function(bpl) {
         dest = bpldByCode.get(bpl);
         d3.select("#bpld-" + bpl)
           .style("fill", q(domain.get(bpl)))
-          .attr("original-title", dest.name + "<br>" + (domain.get(bpl) * 100).toFixed(3) +
+          .attr("original-title", dest.name + "<br>" + (domain.get(bpl)).toFixed(3) +
           "% " + d.name +  " natives<br>" + emigrants.get(bpl) +
           "/" + dest.pop + " residents" );
       });
@@ -282,28 +315,50 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
     if (document.getElementById("SourceButton").checked) {
       emigrants = d.emigrants;
       domain = d3.map();
-      emigrants.entries().forEach(function(d) { domain.set(d.key, d.value / bpldByCode.get(d.key).pop); });
+      emigrants.entries().forEach(function(d) { domain.set(d.key, d.value / bpldByCode.get(d.key).pop * 100); });
       q = d3.scale.quantile().domain(domain.values()).range(colorbrewer.PuBu[7])
-      
+      quantiles = q.quantiles().map(function(item) { return item; });
+      quantiles.unshift(0);
+      quantiles.push(d3.max(domain.values()));
+      qscale = d3.scale.quantile().domain(quantiles).range([0,20,40,60,80,100,120,140]);
+      var qaxis = d3.svg.axis()
+        .scale(qscale)
+        .orient("right")
+        .tickSize(6)
+        .ticks(8)
+        .tickFormat(d3.format(".3f"));
+      legendLabels
+        .call(qaxis);
       emigrants.keys().forEach(function(bpl) {
         dest = bpldByCode.get(bpl);
         d3.select("#bpld-" + bpl)
           .style("fill", q(domain.get(bpl)))
-          .attr("original-title", dest.name + "<br>" + (domain.get(bpl) * 100).toFixed(3) +
+          .attr("original-title", dest.name + "<br>" + (domain.get(bpl)).toFixed(3) +
           "% " + d.name +  " natives<br>" + emigrants.get(bpl) +
           "/" + dest.pop + " residents" );
       });
     } else {
       immigrants = d.immigrants;
       domain = d3.map();
-      immigrants.entries().forEach(function(src) { domain.set(src.key, src.value / d.pop); });
+      immigrants.entries().forEach(function(src) { domain.set(src.key, src.value / d.pop * 100); });
       q = d3.scale.quantile().domain(domain.values()).range(colorbrewer.PuBu[7])
-      
+      quantiles = q.quantiles().map(function(item) { return item; });
+      quantiles.unshift(0);
+      quantiles.push(d3.max(domain.values()));
+      qscale = d3.scale.quantile().domain(quantiles).range([0,20,40,60,80,100,120,140]);
+      var qaxis = d3.svg.axis()
+        .scale(qscale)
+        .orient("right")
+        .tickSize(6)
+        .ticks(8)
+        .tickFormat(d3.format(".3f"));
+      legendLabels
+        .call(qaxis);
       immigrants.keys().forEach(function(bpl) {
         src = bpldByCode.get(bpl);
         d3.select("#bpld-" + bpl)
           .style("fill", q(domain.get(bpl)))
-          .attr("original-title", src.name + "<br>" + (domain.get(bpl) * 100).toFixed(3) +
+          .attr("original-title", src.name + "<br>" + (domain.get(bpl)).toFixed(3) +
           "% " + d.name +  " natives<br>" + immigrants.get(bpl) +
           "/" + src.pop + " residents" );
       });      
