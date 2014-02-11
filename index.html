@@ -374,9 +374,11 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
   d3.select("#SourceButton")
     .on("click", function() {
       countries.selectAll("g")
+        .attr("original-title", function (d) {if (d) {return d.name;} else {return "";}})
         .attr("class", "country")
         .style("fill", null);
       states.selectAll("g")
+        .attr("original-title", function (d) {if (d) {return d.name;} else {return "";}})
         .style("fill", null);    
       selection = null;
     });
@@ -385,9 +387,11 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
     .on("click", function() {
 
       countries.selectAll("g")
+        .attr("original-title", function (d) {if (d) {return d.name;} else {return "";}})
         .attr("class", "country_destmode")
         .style("fill", null);
       states.selectAll("g")
+        .attr("original-title", function (d) {if (d) {return d.name;} else {return "";}})
         .style("fill", null);    
       selection = null;
     });
