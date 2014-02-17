@@ -95,43 +95,31 @@ queue()
 
 function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
   var bpldByCode = d3.map(),
-      bpldToState = d3.map(),
       stateToBpld = d3.map(),
-      bpldToCountry = d3.map(), 
+      bpldToPoly = d3.map(), 
       countryToBpld = d3.map(),
       bpldToName = d3.map(),
+      selection = null;
 
-    positions = [],
-    selection = null;
-
+  //  Process various csv files to link polygons, codes, and names
   stcodes.forEach(function(d) {
-    bpldToState.set(d.bpl, d.jsonstate);    
     stateToBpld.set(d.jsonstate, d.bpl);
   });  
-
   cocodes.forEach(function(d) {
-    bpldToCountry.set(d.bpld, d.iso);
     countryToBpld.set(d.iso, d.bpld);
   });
-
   bpldNames.forEach(function(d) {
     bpldToName.set(d.bpld, d.name);
   })  
-
   location.forEach(function(d) {
     bpldByCode.set(d.bpl, d);
-    d[0] = +d.longitude;
-    d[1] = +d.latitude;
-    var position = projection(d); 
-    d.x = position[0];
-    d.y = position[1];
-    d.outgoing = [];
-    d.incoming = [];
     d.emigrants = d3.map(); // blpd code to number of people leaving from HERE
-    d.immigrants = d3.map(); // blpd code to number of people coming to HERE aka BOSNIA
+    d.immigrants = d3.map(); // blpd code to number of people coming to HERE
     d.name = bpldToName.get(d.bpl);
   });
 
+  // Manually map countries as necessary when one polygon corresponds to
+  // multiple census codes
   bpldByCode.set(41000, bpldByCode.get(41300)); // map england to UK
   bpldByCode.set(41100, bpldByCode.get(41300)); // map scotland to UK
   bpldByCode.set(41410, bpldByCode.get(41300)); // map NI to UK
@@ -141,29 +129,30 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
   bpldByCode.set(46590, bpldByCode.get(46500)); // map USSR to russia
   bpldByCode.set(53440, bpldByCode.get(53400)); // map israel to israel/palestine
 
+  // Process census data
   links.forEach(function(link) {
     var source = bpldByCode.get(link.Birthplace),
         target = bpldByCode.get(link.State),
         weight = Math.round(parseFloat(link.Weight) * 100),
-        old,
-        arc = {source: source, target: target, weight: weight};
+        old;
     
-    source.outgoing.push(arc);
-    old = source.emigrants.get(target.bpl);
-    if (old !== undefined) {
-      source.emigrants.set(target.bpl, old + weight);
+      if (weight > 0) {
+      old = source.emigrants.get(target.bpl);
+      if (old !== undefined) {
+        source.emigrants.set(target.bpl, old + weight);
+      }
+      else { source.emigrants.set(target.bpl, weight); }
+    
+      old = target.immigrants.get(source.bpl);
+      if (old !== undefined) {
+        target.immigrants.set(source.bpl, old + weight);
+      }
+      else { target.immigrants.set(source.bpl, weight); }
     }
-    else { source.emigrants.set(target.bpl, weight); }
-    target.incoming.push(arc);
-    old = target.immigrants.get(source.bpl);
-    if (old !== undefined) {
-      target.immigrants.set(source.bpl, old + weight);
-    }
-    else { target.immigrants.set(source.bpl, weight); }
   });
     
   var withedges = location.filter(function(d) {
-    if ((d.count = Math.max(d.incoming.length, d.outgoing.length)) > 0) { return true; }
+    if ((d.count = Math.max(d.immigrants.size(), d.emigrants.size())) > 0) { return true; }
   });
     
   var spolygons = topojson.feature(us, us.objects.layer1).features; 
