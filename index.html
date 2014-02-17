@@ -348,8 +348,8 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
         d3.select("#bpld-" + bpl)
           .style("fill", q(domain.get(bpl)))
           .attr("original-title", src.name + "<br>" + (domain.get(bpl)).toFixed(3) +
-          "% " + d.name +  " natives<br>" + immigrants.get(bpl) +
-          "/" + d.pop + " residents" );
+          "% of " + d.name +  " residents<br>= " + immigrants.get(bpl) +
+          "/" + d.pop + " people");
       });      
     }
     d3.select(this).style("fill", "#F58F1B");
