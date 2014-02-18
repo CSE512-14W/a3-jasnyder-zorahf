@@ -82,6 +82,7 @@ var legendLabels = svg.append("g")
     .attr("transform", "translate(" + ((-width / 2) + 20) + "," +
     ((height / 2) - 150) + ")")
 
+var selection;
 
 queue()
   .defer(d3.json, "json/world.json")
@@ -99,7 +100,7 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
       bpldToPoly = d3.map(), 
       countryToBpld = d3.map(),
       bpldToName = d3.map(),
-      selection = null;
+      bpldToPoly = d3.map();
 
   //  Process various csv files to link polygons, codes, and names
   stcodes.forEach(function(d) {
@@ -125,7 +126,7 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
   bpldByCode.set(41410, bpldByCode.get(41300)); // map NI to UK
   bpldByCode.set(43610, bpldByCode.get(43600)); // map azores to portugal
   bpldByCode.set(45200, bpldByCode.get(45213)); // map czechoslovakia to czech republic
-  bpldByCode.set(45700, bpldByCode.get(45710)); // map former yugoslavia to croatia
+  bpldByCode.set(45700, bpldByCode.get(45710)); // map yugoslavia to croatia
   bpldByCode.set(46590, bpldByCode.get(46500)); // map USSR to russia
   bpldByCode.set(53440, bpldByCode.get(53400)); // map israel to israel/palestine
 
@@ -151,14 +152,16 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
     }
   });
     
-  var withedges = location.filter(function(d) {
-    if ((d.count = Math.max(d.immigrants.size(), d.emigrants.size())) > 0) { return true; }
-  });
     
   var spolygons = topojson.feature(us, us.objects.layer1).features; 
   var cpolygons = topojson.feature(world, world.objects.countries).features;
-  var bpldToPoly = d3.map();
 
+  // Count max number of incoming or outgoing people ("edges")
+  location.forEach(function(d) {
+    d.count = Math.max(d.immigrants.size(), d.emigrants.size());
+  });
+
+  // Filter those countries with no edges
   staticpolys = cpolygons.filter(function(d) {
     d.bpld = countryToBpld.get(d.id);
     if (d.bpld < 95000 && bpldByCode.get(d.bpld).count > 0) {
@@ -171,10 +174,11 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
     bpldToPoly.set(stateToBpld.get(d.id), d);
   });
 
+  //  Filter objects for join with both polygons and edges
   var bpl_states = location.filter(function(d) {
     if (d.bpl <= 11500 && bpldToPoly.get(d.bpl)) {
-       d.pop = d3.sum(d.immigrants.values())
-       d.totalnatives = d3.sum(d.emigrants.values())
+      d.pop = d3.sum(d.immigrants.values())
+      d.totalnatives = d3.sum(d.emigrants.values())
       return true; 
     }
     
@@ -182,7 +186,7 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
 
   var bpl_countries = location.filter(function(d) {
     if (d.bpl > 11500 && d.bpl < 95000 && bpldToPoly.get(d.bpl)) { 
-       d.totalnatives = d3.sum(d.emigrants.values())
+      d.totalnatives = d3.sum(d.emigrants.values())
       return true; 
     }
   });
@@ -190,17 +194,6 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
   var countries = g.append("g")
     .attr("class", "countries");
 
-  var statics = countries.append("g")
-      .attr("class", "statics")
-    .selectAll("path")
-      .data(staticpolys)
-    .enter().append("path")
-      .attr("class", "static")
-    .attr("d", path);
-    
-  bpl_countries.unshift(null); // hack because first member of array
-  //  does not have an object created for it for some reason on the next line
-  
   var country = countries.selectAll("g")
       .data(bpl_countries)
     .enter().append("g")
@@ -208,60 +201,16 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
       .attr("id", function(d) { return "bpld-" + d.bpl; })
       .attr("title", function(d) { return d.name; });
   
-  country.append("path")
-      .datum(function(d) {
-         return bpldToPoly.get(d.bpl);
-      })
-    .attr("class", "polygon")
+
+  var statics = g.append("g")
+      .attr("class", "statics")
+    .selectAll("path")
+      .data(staticpolys)
+    .enter().append("path")
+      .attr("class", "static")
     .attr("d", path);
-  
-    $(".country").tipsy({
-      gravity: function() {
-        var name = this.__data__.name;
-        if (name == "Russia" || name == "Norway" || name == "Canada")
-            { return 'n'; }
-        else { return 's'; }
-      },
-      html: true
-    });
-
-  country.on("click", function() {
-    if (document.getElementById("SourceButton").checked) {
-      d3.selectAll(".state")
-        .style("fill", null)
-        .attr("original-title", function(d) { return d.name; });;
-      d3.select(this).style("fill", "#F58F1B");
-      if (selection && selection !== this) { d3.select(selection).style("fill", null);}
-      selection = this;
-      d = this.__data__;
-      emigrants = d.emigrants;
-      domain = d3.map();
-      emigrants.entries().forEach(function(d) { domain.set(d.key, d.value / bpldByCode.get(d.key).pop *100); });
-      q = d3.scale.quantile().domain(domain.values()).range(colorbrewer.PuBu[7])
-          quantiles = q.quantiles().map(function(item) { return item; });
-      quantiles.unshift(0);
-      quantiles.push(d3.max(domain.values()));
-      qscale = d3.scale.quantile().domain(quantiles).range([0,20,40,60,80,100,120,140]);
-      var qaxis = d3.svg.axis()
-        .scale(qscale)
-        .orient("right")
-        .tickSize(6)
-        .ticks(8)
-        .tickFormat(d3.format(".3f"));
-      legendLabels
-          .call(qaxis);
-      emigrants.keys().forEach(function(bpl) {
-        dest = bpldByCode.get(bpl);
-        d3.select("#bpld-" + bpl)
-          .style("fill", q(domain.get(bpl)))
-          .attr("original-title", dest.name + "<br>" + (domain.get(bpl)).toFixed(3) +
-          "% " + d.name +  " natives<br>" + emigrants.get(bpl) +
-          "/" + dest.pop + " residents" );
-      });
-    }
-  });  
-
-  countries.append("path")
+    
+  g.append("path")
       .datum(topojson.mesh(world, world.objects.countries, function(a, b) { return a !== b; }))
       .attr("class", "boundary")
       .attr("d", path);
@@ -276,115 +225,101 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
       .attr("id", function(d) { return "bpld-" + d.bpl; })
       .attr("title", function(d) { return d.name; });
 
-  state.append("path")
-      .datum(function(d) { 
-          return bpldToPoly.get(d.bpl);
-      })
-      .attr("class", "polygon")
+  g.append("path")
+      .datum(topojson.mesh(us, us.objects.layer1, function(a, b) { return a !== b; }))
+      .attr("class", "stateb")
       .attr("d", path);
-  
-    $(".state").tipsy({
-      gravity: function() {
-        var name = this.__data__.name;
-        if (name == "Alaska")
-            { return 'n'; }
-        else { return 's'; }
-      },
-      html: true
-    });
+    
+  d3.selectAll(".country, .state").append("path")
+      .datum(function(d) {
+         return bpldToPoly.get(d.bpl);
+      })
+    .attr("class", "polygon")
+    .attr("d", path);
+    
+  $(".country, .state").tipsy({
+    gravity: function() {
+      var name = this.__data__.name;
+      if (name == "Russia" || name == "Norway" || name == "Canada" || name == "Alaska")
+        { return 'n'; }
+      else { return 's'; }},
+    html: true
+  });
 
+  d3.selectAll(".country").on("click", function() {
+    if (document.getElementById("SourceButton").checked) {
+      
+      clearAll();
+      d = this.__data__;
+      d3.select(this).style("fill", "#F58F1B");
+      domain = d3.map();
+      d.emigrants.entries().forEach(function(d) { domain.set(d.key, d.value / bpldByCode.get(d.key).pop *100); });
+      colorScale(domain);
+      domain.keys().forEach(function(bpl) {
+        dest = bpldByCode.get(bpl);
+        d3.select("#bpld-" + bpl)
+          .attr("original-title", dest.name + "<br>" + (domain.get(bpl)).toFixed(3) +
+          "% " + d.name +  " natives<br>" + d.emigrants.get(bpl) +
+          "/" + dest.pop + " residents" );
+      });
+    }
+  });  
 
   state.on("click", function() {
-    d3.selectAll(".state")
-      .style("fill", null)
-      .attr("original-title", function(d) { return d.name; }); 
-    if (selection && selection !== this) { d3.select(selection).style("fill", null);}
-    selection = this;
+    
+    clearAll();
     d = this.__data__;
+      
     if (document.getElementById("SourceButton").checked) {
-      emigrants = d.emigrants;
       domain = d3.map();
-      emigrants.entries().forEach(function(d) { domain.set(d.key, d.value / bpldByCode.get(d.key).pop * 100); });
-      q = d3.scale.quantile().domain(domain.values()).range(colorbrewer.PuBu[7])
-      quantiles = q.quantiles().map(function(item) { return item; });
-      quantiles.unshift(0);
-      quantiles.push(d3.max(domain.values()));
-      qscale = d3.scale.quantile().domain(quantiles).range([0,20,40,60,80,100,120,140]);
-      var qaxis = d3.svg.axis()
-        .scale(qscale)
-        .orient("right")
-        .tickSize(6)
-        .ticks(8)
-        .tickFormat(d3.format(".3f"));
-      legendLabels
-        .call(qaxis);
-      emigrants.keys().forEach(function(bpl) {
+      d.emigrants.entries().forEach(function(d) { domain.set(d.key, d.value / bpldByCode.get(d.key).pop * 100); });
+      colorScale(domain);
+      domain.keys().forEach(function(bpl) {
         dest = bpldByCode.get(bpl);
         d3.select("#bpld-" + bpl)
           .style("fill", q(domain.get(bpl)))
           .attr("original-title", dest.name + "<br>" + (domain.get(bpl)).toFixed(3) +
-          "% " + d.name +  " natives<br>" + emigrants.get(bpl) +
+          "% " + d.name +  " natives<br>" + d.emigrants.get(bpl) +
           "/" + dest.pop + " residents" );
       });
+        
     } else {
-      immigrants = d.immigrants;
       domain = d3.map();
-      immigrants.entries().forEach(function(src) { domain.set(src.key, src.value / d.pop * 100); });
-      q = d3.scale.quantile().domain(domain.values()).range(colorbrewer.PuBu[7])
-      quantiles = q.quantiles().map(function(item) { return item; });
-      quantiles.unshift(0);
-      quantiles.push(d3.max(domain.values()));
-      qscale = d3.scale.quantile().domain(quantiles).range([0,20,40,60,80,100,120,140]);
-      var qaxis = d3.svg.axis()
-        .scale(qscale)
-        .orient("right")
-        .tickSize(6)
-        .ticks(8)
-        .tickFormat(d3.format(".3f"));
-      legendLabels
-        .call(qaxis);
-      immigrants.keys().forEach(function(bpl) {
+      d.immigrants.entries().forEach(function(src) { domain.set(src.key, src.value / d.pop * 100); });
+      colorScale(domain);
+      domain.keys().forEach(function(bpl) {
         src = bpldByCode.get(bpl);
         d3.select("#bpld-" + bpl)
-          .style("fill", q(domain.get(bpl)))
           .attr("original-title", src.name + "<br>" + (domain.get(bpl)).toFixed(3) +
-          "% of " + d.name +  " residents<br>= " + immigrants.get(bpl) +
+          "% of " + d.name +  " residents<br>= " + d.immigrants.get(bpl) +
           "/" + d.pop + " people");
       });      
     }
     d3.select(this).style("fill", "#F58F1B");
   });
 
-  g.append("path")
-      .datum(topojson.mesh(us, us.objects.layer1, function(a, b) { return a !== b; }))
-      .attr("class", "stateb")
-      .attr("d", path);
 
   d3.select("#SourceButton")
     .on("click", function() {
-      countries.selectAll("g")
-        .attr("original-title", function (d) {if (d) {return d.name;} else {return "";}})
+      clearAll();
+      country
         .attr("class", "country")
-        .style("fill", null);
-      states.selectAll("g")
-        .attr("original-title", function (d) {if (d) {return d.name;} else {return "";}})
-        .style("fill", null);    
-      selection = null;
     });
 
   d3.select("#DestinationButton")
     .on("click", function() {
-
-      countries.selectAll("g")
-        .attr("original-title", function (d) {if (d) {return d.name;} else {return "";}})
+      clearAll();
+      country
         .attr("class", "country_destmode")
-        .style("fill", null);
-      states.selectAll("g")
-        .attr("original-title", function (d) {if (d) {return d.name;} else {return "";}})
-        .style("fill", null);    
-      selection = null;
     });
 
+}
+
+function clearAll() {
+  d3.selectAll(".state, .country, .country_destmode") 
+    .attr("original-title", function (d) { return d.name; })
+    .style("fill", null);
+  //selection = null;
 }
 
 function move() {
@@ -394,6 +329,26 @@ function move() {
   t[1] = Math.min(height / 2 * (s - 1) + 230 * s, Math.max(height / 2 * (1 - s) - 230 * s, t[1]));
   zoom.translate(t);
   g.style("stroke-width", 1 / s).attr("transform", "translate(" + t + ")scale(" + s + ")");
+}
+
+function colorScale(linkmap) {
+  q = d3.scale.quantile().domain(linkmap.values()).range(colorbrewer.PuBu[7])
+  quantiles = q.quantiles().map(function(item) { return item; });
+  quantiles.unshift(0);
+  quantiles.push(d3.max(domain.values()));
+  qscale = d3.scale.quantile().domain(quantiles).range([0,20,40,60,80,100,120,140]);
+  var qaxis = d3.svg.axis()
+    .scale(qscale)
+    .orient("right")
+    .tickSize(6)
+    .ticks(8)
+    .tickFormat(d3.format(".3f"));
+  legendLabels
+    .call(qaxis);
+  linkmap.keys().forEach(function(bpl) {
+    d3.select("#bpld-" + bpl)
+      .style("fill", q(domain.get(bpl)));
+  });
 }
 
 </script>
