@@ -151,7 +151,7 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
     }
   });
     
-    
+  // Extract polygons from topojson 
   var spolygons = topojson.feature(us, us.objects.layer1).features; 
   var cpolygons = topojson.feature(world, world.objects.countries).features;
 
@@ -160,7 +160,7 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
     d.count = Math.max(d.immigrants.size(), d.emigrants.size());
   });
 
-  // Filter those countries with no edges
+  // Filter those countries with no edges and class them as static
   staticpolys = cpolygons.filter(function(d) {
     d.bpld = countryToBpld.get(d.id);
     if (d.bpld < 95000 && bpldByCode.get(d.bpld).count > 0) {
@@ -169,20 +169,19 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
     else { return true; }
   });
     
+  // All states should have edges so no need to filter
   spolygons.forEach(function(d) {
     bpldToPoly.set(stateToBpld.get(d.id), d);
   });
 
-  //  Filter objects for join with both polygons and edges
+  //  Filter objects down to those with both polygons and edges
   var bpl_states = location.filter(function(d) {
     if (d.bpl <= 11500 && bpldToPoly.get(d.bpl)) {
       d.pop = d3.sum(d.immigrants.values())
       d.totalnatives = d3.sum(d.emigrants.values())
       return true; 
     }
-    
   });
-
   var bpl_countries = location.filter(function(d) {
     if (d.bpl > 11500 && d.bpl < 95000 && bpldToPoly.get(d.bpl)) { 
       d.totalnatives = d3.sum(d.emigrants.values())
@@ -190,17 +189,16 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
     }
   });
 
+  
+  // Create containers to hold each country
   var countries = g.append("g")
     .attr("class", "countries");
-
   var country = countries.selectAll("g")
       .data(bpl_countries)
     .enter().append("g")
       .attr("class", "country")
       .attr("id", function(d) { return "bpld-" + d.bpl; })
       .attr("title", function(d) { return d.name; });
-  
-
   var statics = g.append("g")
       .attr("class", "statics")
     .selectAll("path")
@@ -209,14 +207,15 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
       .attr("class", "static")
     .attr("d", path);
     
+  // Draw the borders between countries
   g.append("path")
       .datum(topojson.mesh(world, world.objects.countries, function(a, b) { return a !== b; }))
       .attr("class", "boundary")
       .attr("d", path);
 
+  // Create state containers
   var states = g.append("g")
     .attr("class", "states");
-  
   var state = states.selectAll("g")
       .data(bpl_states)
     .enter().append("g")
@@ -224,11 +223,13 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
       .attr("id", function(d) { return "bpld-" + d.bpl; })
       .attr("title", function(d) { return d.name; });
 
+  // and draw state borders
   g.append("path")
       .datum(topojson.mesh(us, us.objects.layer1, function(a, b) { return a !== b; }))
       .attr("class", "stateb")
       .attr("d", path);
     
+  // Draw the polygons themselves
   d3.selectAll(".country, .state").append("path")
       .datum(function(d) {
          return bpldToPoly.get(d.bpl);
@@ -236,75 +237,67 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
     .attr("class", "polygon")
     .attr("d", path);
     
+  // Add tipsy tooltips to each reguib
   $(".country, .state").tipsy({
     gravity: function() {
       var name = this.__data__.name;
+      // Have tooltips for the northernmost regions display on the
+      // south side to avoid going offscreen
       if (name == "Russia" || name == "Norway" || name == "Canada" || name == "Alaska")
         { return 'n'; }
       else { return 's'; }},
     html: true
   });
 
-  d3.selectAll(".country").on("click", function() {
-    if (document.getElementById("SourceButton").checked) {
+  // Add the principal interaction - clicking to explore migration
+  d3.selectAll(".state, .country").on("click", function() {
+    isState = d3.select(this).classed("state");
+    sourceMode = document.getElementById("SourceButton").checked;
       
-      clearAll();
-      d = this.__data__;
-      d3.select(this).style("fill", "#F58F1B");
-      domain = d3.map();
-      d.emigrants.entries().forEach(function(d) { domain.set(d.key, d.value / bpldByCode.get(d.key).pop *100); });
-      colorScale(domain);
-      domain.keys().forEach(function(bpl) {
-        dest = bpldByCode.get(bpl);
-        d3.select("#bpld-" + bpl)
-          .attr("original-title", dest.name + "<br>" + (domain.get(bpl)).toFixed(3) +
-          "% " + d.name +  " natives<br>" + d.emigrants.get(bpl) +
-          "/" + dest.pop + " residents" );
-      });
-    }
-  });  
-
-  state.on("click", function() {
-    
+    // We don't have data on migration to countries - take no action
+    if (!isState && !sourceMode) { return; }
+      
     clearAll();
     d = this.__data__;
+    domain = d3.map();
       
-    if (document.getElementById("SourceButton").checked) {
-      domain = d3.map();
-      d.emigrants.entries().forEach(function(d) { domain.set(d.key, d.value / bpldByCode.get(d.key).pop * 100); });
-      colorScale(domain);
-      domain.keys().forEach(function(bpl) {
-        dest = bpldByCode.get(bpl);
-        d3.select("#bpld-" + bpl)
-          .style("fill", q(domain.get(bpl)))
-          .attr("original-title", dest.name + "<br>" + (domain.get(bpl)).toFixed(3) +
-          "% " + d.name +  " natives<br>" + d.emigrants.get(bpl) +
-          "/" + dest.pop + " residents" );
-      });
-        
-    } else {
-      domain = d3.map();
-      d.immigrants.entries().forEach(function(src) { domain.set(src.key, src.value / d.pop * 100); });
-      colorScale(domain);
-      domain.keys().forEach(function(bpl) {
-        src = bpldByCode.get(bpl);
-        d3.select("#bpld-" + bpl)
-          .attr("original-title", src.name + "<br>" + (domain.get(bpl)).toFixed(3) +
-          "% of " + d.name +  " residents<br>= " + d.immigrants.get(bpl) +
-          "/" + d.pop + " people");
-      });      
-    }
+    // Select appropriate array based on mode
+    if (sourceMode) { d.emigrants.entries().forEach(function(dest) { domain.set(dest.key, dest.value / bpldByCode.get(dest.key).pop *100); }); }
+    else            { d.immigrants.entries().forEach(function(src) { domain.set(src.key, src.value / d.pop * 100); }); }
+      
+    // Color the map
+    colorScale(domain);
+      
+    // Rewrite the tooltips with details on demand
+    domain.keys().forEach(function(bpl) {
+      region = bpldByCode.get(bpl);
+      if (sourceMode) {
+        tooltip = region.name + "<br>" + (domain.get(bpl)).toFixed(3) +
+        "% " + d.name +  " natives<br>" + d.emigrants.get(bpl) +
+        "/" + region.pop + " residents";
+      }
+      else {
+        tooltip = region.name + "<br>" + (domain.get(bpl)).toFixed(3) +
+        "% of " + d.name +  " residents<br>= " + d.immigrants.get(bpl) +
+        "/" + d.pop + " people";
+      }
+      d3.select("#bpld-" + bpl)
+        .attr("original-title", tooltip);
+    });
+      
+    // Color the selected country to keep visual state
     d3.select(this).style("fill", "#F58F1B");
-  });
+  });  
 
-
+  // On switching modes, clear coloring/scale. In destination mode, do
+  // not highlight countries on hover to show they cannot be
+  // interacted with
   d3.select("#SourceButton")
     .on("click", function() {
       clearAll();
       country
         .attr("class", "country")
     });
-
   d3.select("#DestinationButton")
     .on("click", function() {
       clearAll();
