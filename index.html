@@ -64,6 +64,7 @@ svg.append("rect")
 var legend = svg.append("g")
     .attr("id", "legend")
     .attr("class", "colors")
+    .attr("visibility", "hidden");
 
 legend.selectAll(".colorbar")
   .data([0,1,2,3,4,5,6])
@@ -81,8 +82,6 @@ var legendLabels = svg.append("g")
     .attr("class", "y axis")
     .attr("transform", "translate(" + ((-width / 2) + 20) + "," +
     ((height / 2) - 150) + ")")
-
-var selection;
 
 queue()
   .defer(d3.json, "json/world.json")
@@ -319,7 +318,8 @@ function clearAll() {
   d3.selectAll(".state, .country, .country_destmode") 
     .attr("original-title", function (d) { return d.name; })
     .style("fill", null);
-  //selection = null;
+  d3.selectAll("#legend, #laxis")
+    .style("visibility", "hidden");
 }
 
 function move() {
@@ -348,6 +348,8 @@ function colorScale(linkmap) {
   linkmap.keys().forEach(function(bpl) {
     d3.select("#bpld-" + bpl)
       .style("fill", q(domain.get(bpl)));
+  d3.selectAll("#legend, #laxis")
+    .style("visibility", "visible");
   });
 }
 
