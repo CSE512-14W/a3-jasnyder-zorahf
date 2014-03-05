@@ -34,7 +34,7 @@ var svg = d3.select("body").append("svg")
     .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")")
     .call(zoom);
 
-var modes = ["Source", "Destination"], j = 0;
+var modes = ["Source", "Destination"], selected = 0;
 var form = d3.select("body").append("form");
 var labels = form.selectAll("label")
     .data(modes)
@@ -49,19 +49,22 @@ var labels = form.selectAll("label")
         id: function(d) { return d + "Button"; },
         value: function(d) { return d; }
     })
-    .property("checked", function(d, i) {return i===j;});
+    .property("checked", function(d, i) {return i===selected;});
 
+var behind = svg.append("g");
 
-var g = svg.append("g");
-                               
-svg.append("rect")
+behind.append("rect")
     .attr("class", "overlay")
     .attr("x", -width / 2)
     .attr("y", -height / 2)
     .attr("width", width)
     .attr("height", height);
 
-var legend = svg.append("g")
+var zoomable = svg.append("g");
+                               
+var ontop = svg.append("g");
+
+var legend = ontop.append("g")
     .attr("id", "legend")
     .attr("class", "colors")
     .attr("visibility", "hidden");
@@ -77,7 +80,7 @@ legend.selectAll(".colorbar")
   .attr("class", function(d) { return "q" + d + "-7"; })
   .attr("stroke", "none");
 
-var legendLabels = svg.append("g")
+var legendLabels = ontop.append("g")
     .attr("id", "laxis")
     .attr("class", "y axis")
     .attr("transform", "translate(" + ((-width / 2) + 20) + "," +
@@ -191,7 +194,7 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
 
   
   // Create containers to hold each country
-  var countries = g.append("g")
+  var countries = zoomable.append("g")
     .attr("class", "countries");
   var country = countries.selectAll("g")
       .data(bpl_countries)
@@ -199,7 +202,7 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
       .attr("class", "country")
       .attr("id", function(d) { return "bpld-" + d.bpl; })
       .attr("title", function(d) { return d.name; });
-  var statics = g.append("g")
+  var statics = zoomable.append("g")
       .attr("class", "statics")
     .selectAll("path")
       .data(staticpolys)
@@ -208,13 +211,13 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
     .attr("d", path);
     
   // Draw the borders between countries
-  g.append("path")
+  zoomable.append("path")
       .datum(topojson.mesh(world, world.objects.countries, function(a, b) { return a !== b; }))
       .attr("class", "boundary")
       .attr("d", path);
 
   // Create state containers
-  var states = g.append("g")
+  var states = zoomable.append("g")
     .attr("class", "states");
   var state = states.selectAll("g")
       .data(bpl_states)
@@ -224,9 +227,9 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
       .attr("title", function(d) { return d.name; });
 
   // and draw state borders
-  g.append("path")
+  zoomable.append("path")
       .datum(topojson.mesh(us, us.objects.layer1, function(a, b) { return a !== b; }))
-      .attr("class", "stateb")
+      .attr("class", "boundary")
       .attr("d", path);
     
   // Draw the polygons themselves
@@ -321,7 +324,7 @@ function move() {
   t[0] = Math.min(width / 2 * (s - 1), Math.max(width / 2 * (1 - s), t[0]));
   t[1] = Math.min(height / 2 * (s - 1) + 230 * s, Math.max(height / 2 * (1 - s) - 230 * s, t[1]));
   zoom.translate(t);
-  g.style("stroke-width", 1 / s).attr("transform", "translate(" + t + ")scale(" + s + ")");
+  zoomable.style("stroke-width", 1 / s).attr("transform", "translate(" + t + ")scale(" + s + ")");
 }
 
 function colorScale(linkmap) {

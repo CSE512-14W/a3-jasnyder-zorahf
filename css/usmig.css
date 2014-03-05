@@ -1,5 +1,5 @@
 .overlay {
-  fill: none;
+  fill: transparent;
 }
 
 .country {
@@ -16,12 +16,10 @@
 
 .state:hover {
   fill: #BD6E00;
-  pointer-events: inherit;
 }
 
 .country:hover {
   fill: #BD6E00;
-  pointer-events: inherit;
 }
 
 .static {
@@ -49,26 +47,8 @@ h1 {
   stroke-linecap: round;
 }
 
-.stateb {
-  fill: none;
-  stroke: #fff;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-}
-
 #country-840 {
   fill: none;
-}
-
-.edge {
-  display: none;
-  fill: none;
-  stroke: #000;
-  z-index: 100000000000000000;
-}
-
-.state:hover .edge {
-  display: inline;
 }
 
 .axis {
