@@ -34,7 +34,7 @@ var svg = d3.select("body").append("svg")
     .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")")
     .call(zoom);
 
-var modes = ["Source", "Destination"], j = 0;
+var modes = ["Source", "Destination"], selected = 0;
 var form = d3.select("body").append("form");
 var labels = form.selectAll("label")
     .data(modes)
@@ -49,21 +49,25 @@ var labels = form.selectAll("label")
         id: function(d) { return d + "Button"; },
         value: function(d) { return d; }
     })
-    .property("checked", function(d, i) {return i===j;});
+    .property("checked", function(d, i) {return i===selected;});
 
+var behind = svg.append("g");
 
-var g = svg.append("g");
-                               
-svg.append("rect")
+behind.append("rect")
     .attr("class", "overlay")
     .attr("x", -width / 2)
     .attr("y", -height / 2)
     .attr("width", width)
     .attr("height", height);
 
-var legend = svg.append("g")
+var zoomable = svg.append("g");
+                               
+var ontop = svg.append("g");
+
+var legend = ontop.append("g")
     .attr("id", "legend")
     .attr("class", "colors")
+    .attr("visibility", "hidden");
 
 legend.selectAll(".colorbar")
   .data([0,1,2,3,4,5,6])
@@ -76,13 +80,11 @@ legend.selectAll(".colorbar")
   .attr("class", function(d) { return "q" + d + "-7"; })
   .attr("stroke", "none");
 
-var legendLabels = svg.append("g")
+var legendLabels = ontop.append("g")
     .attr("id", "laxis")
     .attr("class", "y axis")
     .attr("transform", "translate(" + ((-width / 2) + 20) + "," +
     ((height / 2) - 150) + ")")
-
-var selection;
 
 queue()
   .defer(d3.json, "json/world.json")
@@ -152,7 +154,7 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
     }
   });
     
-    
+  // Extract polygons from topojson 
   var spolygons = topojson.feature(us, us.objects.layer1).features; 
   var cpolygons = topojson.feature(world, world.objects.countries).features;
 
@@ -161,7 +163,7 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
     d.count = Math.max(d.immigrants.size(), d.emigrants.size());
   });
 
-  // Filter those countries with no edges
+  // Filter those countries with no edges and class them as static
   staticpolys = cpolygons.filter(function(d) {
     d.bpld = countryToBpld.get(d.id);
     if (d.bpld < 95000 && bpldByCode.get(d.bpld).count > 0) {
@@ -170,20 +172,19 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
     else { return true; }
   });
     
+  // All states should have edges so no need to filter
   spolygons.forEach(function(d) {
     bpldToPoly.set(stateToBpld.get(d.id), d);
   });
 
-  //  Filter objects for join with both polygons and edges
+  //  Filter objects down to those with both polygons and edges
   var bpl_states = location.filter(function(d) {
     if (d.bpl <= 11500 && bpldToPoly.get(d.bpl)) {
       d.pop = d3.sum(d.immigrants.values())
       d.totalnatives = d3.sum(d.emigrants.values())
       return true; 
     }
-    
   });
-
   var bpl_countries = location.filter(function(d) {
     if (d.bpl > 11500 && d.bpl < 95000 && bpldToPoly.get(d.bpl)) { 
       d.totalnatives = d3.sum(d.emigrants.values())
@@ -191,18 +192,17 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
     }
   });
 
-  var countries = g.append("g")
+  
+  // Create containers to hold each country
+  var countries = zoomable.append("g")
     .attr("class", "countries");
-
   var country = countries.selectAll("g")
       .data(bpl_countries)
     .enter().append("g")
       .attr("class", "country")
       .attr("id", function(d) { return "bpld-" + d.bpl; })
       .attr("title", function(d) { return d.name; });
-  
-
-  var statics = g.append("g")
+  var statics = zoomable.append("g")
       .attr("class", "statics")
     .selectAll("path")
       .data(staticpolys)
@@ -210,14 +210,15 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
       .attr("class", "static")
     .attr("d", path);
     
-  g.append("path")
+  // Draw the borders between countries
+  zoomable.append("path")
       .datum(topojson.mesh(world, world.objects.countries, function(a, b) { return a !== b; }))
       .attr("class", "boundary")
       .attr("d", path);
 
-  var states = g.append("g")
+  // Create state containers
+  var states = zoomable.append("g")
     .attr("class", "states");
-  
   var state = states.selectAll("g")
       .data(bpl_states)
     .enter().append("g")
@@ -225,11 +226,13 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
       .attr("id", function(d) { return "bpld-" + d.bpl; })
       .attr("title", function(d) { return d.name; });
 
-  g.append("path")
+  // and draw state borders
+  zoomable.append("path")
       .datum(topojson.mesh(us, us.objects.layer1, function(a, b) { return a !== b; }))
-      .attr("class", "stateb")
+      .attr("class", "boundary")
       .attr("d", path);
     
+  // Draw the polygons themselves
   d3.selectAll(".country, .state").append("path")
       .datum(function(d) {
          return bpldToPoly.get(d.bpl);
@@ -237,75 +240,67 @@ function ready(error, world, us, links, location, stcodes, cocodes, bpldNames) {
     .attr("class", "polygon")
     .attr("d", path);
     
+  // Add tipsy tooltips to each reguib
   $(".country, .state").tipsy({
     gravity: function() {
       var name = this.__data__.name;
+      // Have tooltips for the northernmost regions display on the
+      // south side to avoid going offscreen
       if (name == "Russia" || name == "Norway" || name == "Canada" || name == "Alaska")
         { return 'n'; }
       else { return 's'; }},
     html: true
   });
 
-  d3.selectAll(".country").on("click", function() {
-    if (document.getElementById("SourceButton").checked) {
+  // Add the principal interaction - clicking to explore migration
+  d3.selectAll(".state, .country").on("click", function() {
+    isState = d3.select(this).classed("state");
+    sourceMode = document.getElementById("SourceButton").checked;
       
-      clearAll();
-      d = this.__data__;
-      d3.select(this).style("fill", "#F58F1B");
-      domain = d3.map();
-      d.emigrants.entries().forEach(function(d) { domain.set(d.key, d.value / bpldByCode.get(d.key).pop *100); });
-      colorScale(domain);
-      domain.keys().forEach(function(bpl) {
-        dest = bpldByCode.get(bpl);
-        d3.select("#bpld-" + bpl)
-          .attr("original-title", dest.name + "<br>" + (domain.get(bpl)).toFixed(3) +
-          "% " + d.name +  " natives<br>" + d.emigrants.get(bpl) +
-          "/" + dest.pop + " residents" );
-      });
-    }
-  });  
-
-  state.on("click", function() {
-    
+    // We don't have data on migration to countries - take no action
+    if (!isState && !sourceMode) { return; }
+      
     clearAll();
     d = this.__data__;
+    domain = d3.map();
       
-    if (document.getElementById("SourceButton").checked) {
-      domain = d3.map();
-      d.emigrants.entries().forEach(function(d) { domain.set(d.key, d.value / bpldByCode.get(d.key).pop * 100); });
-      colorScale(domain);
-      domain.keys().forEach(function(bpl) {
-        dest = bpldByCode.get(bpl);
-        d3.select("#bpld-" + bpl)
-          .style("fill", q(domain.get(bpl)))
-          .attr("original-title", dest.name + "<br>" + (domain.get(bpl)).toFixed(3) +
-          "% " + d.name +  " natives<br>" + d.emigrants.get(bpl) +
-          "/" + dest.pop + " residents" );
-      });
-        
-    } else {
-      domain = d3.map();
-      d.immigrants.entries().forEach(function(src) { domain.set(src.key, src.value / d.pop * 100); });
-      colorScale(domain);
-      domain.keys().forEach(function(bpl) {
-        src = bpldByCode.get(bpl);
-        d3.select("#bpld-" + bpl)
-          .attr("original-title", src.name + "<br>" + (domain.get(bpl)).toFixed(3) +
-          "% of " + d.name +  " residents<br>= " + d.immigrants.get(bpl) +
-          "/" + d.pop + " people");
-      });      
-    }
+    // Select appropriate array based on mode
+    if (sourceMode) { d.emigrants.entries().forEach(function(dest) { domain.set(dest.key, dest.value / bpldByCode.get(dest.key).pop *100); }); }
+    else            { d.immigrants.entries().forEach(function(src) { domain.set(src.key, src.value / d.pop * 100); }); }
+      
+    // Color the map
+    colorScale(domain);
+      
+    // Rewrite the tooltips with details on demand
+    domain.keys().forEach(function(bpl) {
+      region = bpldByCode.get(bpl);
+      if (sourceMode) {
+        tooltip = region.name + "<br>" + (domain.get(bpl)).toFixed(3) +
+        "% " + d.name +  " natives<br>" + d.emigrants.get(bpl) +
+        "/" + region.pop + " residents";
+      }
+      else {
+        tooltip = region.name + "<br>" + (domain.get(bpl)).toFixed(3) +
+        "% of " + d.name +  " residents<br>= " + d.immigrants.get(bpl) +
+        "/" + d.pop + " people";
+      }
+      d3.select("#bpld-" + bpl)
+        .attr("original-title", tooltip);
+    });
+      
+    // Color the selected country to keep visual state
     d3.select(this).style("fill", "#F58F1B");
-  });
+  });  
 
-
+  // On switching modes, clear coloring/scale. In destination mode, do
+  // not highlight countries on hover to show they cannot be
+  // interacted with
   d3.select("#SourceButton")
     .on("click", function() {
       clearAll();
       country
         .attr("class", "country")
     });
-
   d3.select("#DestinationButton")
     .on("click", function() {
       clearAll();
@@ -319,7 +314,8 @@ function clearAll() {
   d3.selectAll(".state, .country, .country_destmode") 
     .attr("original-title", function (d) { return d.name; })
     .style("fill", null);
-  //selection = null;
+  d3.selectAll("#legend, #laxis")
+    .style("visibility", "hidden");
 }
 
 function move() {
@@ -328,7 +324,7 @@ function move() {
   t[0] = Math.min(width / 2 * (s - 1), Math.max(width / 2 * (1 - s), t[0]));
   t[1] = Math.min(height / 2 * (s - 1) + 230 * s, Math.max(height / 2 * (1 - s) - 230 * s, t[1]));
   zoom.translate(t);
-  g.style("stroke-width", 1 / s).attr("transform", "translate(" + t + ")scale(" + s + ")");
+  zoomable.style("stroke-width", 1 / s).attr("transform", "translate(" + t + ")scale(" + s + ")");
 }
 
 function colorScale(linkmap) {
@@ -348,6 +344,8 @@ function colorScale(linkmap) {
   linkmap.keys().forEach(function(bpl) {
     d3.select("#bpld-" + bpl)
       .style("fill", q(domain.get(bpl)));
+  d3.selectAll("#legend, #laxis")
+    .style("visibility", "visible");
   });
 }
 
